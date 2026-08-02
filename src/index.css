@@ -1,0 +1,12 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  background: oklch(97% 0.014 75);
+}
+
+input[type='number']::-webkit-inner-spin-button {
+  opacity: 1;
+}
