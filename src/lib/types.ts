@@ -79,3 +79,20 @@ export interface Goal {
   targetAmount: number;
   assumedReturnPct: number;
 }
+
+export interface BackupData {
+  filingStatus: FilingStatus;
+  stateTaxRate: number;
+  people: Person[];
+  expenses: Expense[];
+  debts: Debt[];
+  investments: Investment[];
+  assets: Assets;
+  scenario: Scenario;
+  savedScenarios: SavedScenario[];
+  netWorthHistory: NetWorthSnapshot[];
+  debtStrategy: DebtStrategy;
+  debtExtraPayment: number;
+  goal: Goal;
+  nextId: number;
+}

@@ -80,7 +80,7 @@ export function BudgetExpenses() {
             {expenses.map((x) => (
               <tr key={x.id}>
                 <td className="p-1.5 px-2.5 border-b border-rowborder">
-                  <TextCell value={x.category} onChange={(v) => updateExpense(x.id, 'category', v)} />
+                  <TextCell value={x.category} onChange={(v) => updateExpense(x.id, 'category', v)} fallback="Uncategorized" />
                 </td>
                 <td className="p-1.5 px-2.5 border-b border-rowborder text-right">
                   <NumberCell value={x.monthly} onChange={(v) => updateExpense(x.id, 'monthly', v)} />

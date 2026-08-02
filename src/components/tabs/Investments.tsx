@@ -85,7 +85,7 @@ export function Investments() {
             {investments.map((v) => (
               <tr key={v.id}>
                 <td className="p-1.5 px-2.5 border-b border-rowborder">
-                  <TextCell value={v.name} onChange={(val) => updateInvestment(v.id, 'name', val)} />
+                  <TextCell value={v.name} onChange={(val) => updateInvestment(v.id, 'name', val)} fallback="Unnamed account" />
                 </td>
                 <td className="p-1.5 px-2.5 border-b border-rowborder">
                   <TextCell value={v.type} onChange={(val) => updateInvestment(v.id, 'type', val)} />

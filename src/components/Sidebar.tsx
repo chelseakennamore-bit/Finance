@@ -1,6 +1,8 @@
 import type { ChangeEvent } from 'react';
 import { useFinanceStore } from '../store/financeStore';
 import type { FilingStatus, TabKey } from '../lib/types';
+import { parseClampedNumber } from '../lib/validate';
+import { BackupControls } from './BackupControls';
 
 const NAV_ITEMS: { key: TabKey; label: string }[] = [
   { key: 'overview', label: 'Overview' },
@@ -58,10 +60,11 @@ export function Sidebar() {
           type="number"
           step={0.1}
           value={stateTaxRate}
-          onChange={(e: ChangeEvent<HTMLInputElement>) => setStateTaxRate(parseFloat(e.target.value) || 0)}
+          onChange={(e: ChangeEvent<HTMLInputElement>) => setStateTaxRate(parseClampedNumber(e.target.value))}
           className="w-full mt-1.5 px-2 py-1.5 rounded-md text-[13px] font-mono bg-sidebar-input-bg border border-sidebar-input-border text-sidebar-title"
         />
       </div>
+      <BackupControls />
     </div>
   );
 }

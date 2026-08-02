@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
-import type { ChangeEvent } from 'react';
+import type { ChangeEvent, FocusEvent } from 'react';
 import { useFinanceStore } from '../../store/financeStore';
 import { computeHousehold } from '../../lib/derive';
 import { fmt } from '../../lib/format';
+import { parseClampedNumber } from '../../lib/validate';
 import { Card } from '../ui/Card';
 
 function Th({ children, right = false }: { children?: React.ReactNode; right?: boolean }) {
@@ -33,6 +34,9 @@ export function IncomePay() {
           <input
             value={p.name}
             onChange={(e: ChangeEvent<HTMLInputElement>) => updatePerson(p.id, 'name', e.target.value)}
+            onBlur={(e: FocusEvent<HTMLInputElement>) => {
+              if (!e.target.value.trim()) updatePerson(p.id, 'name', 'Unnamed');
+            }}
             className="text-base font-bold border-none bg-transparent pb-3 w-full"
             style={{ color: 'oklch(22% 0.01 60)' }}
           />
@@ -42,7 +46,7 @@ export function IncomePay() {
               <input
                 type="number"
                 value={p.salary}
-                onChange={(e: ChangeEvent<HTMLInputElement>) => updatePerson(p.id, 'salary', parseFloat(e.target.value) || 0)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => updatePerson(p.id, 'salary', parseClampedNumber(e.target.value))}
                 className="w-[120px] border border-inputborder rounded-md px-2 py-1.5 text-sm font-mono"
               />
             </div>
@@ -51,7 +55,7 @@ export function IncomePay() {
               <input
                 type="number"
                 value={p.bonus}
-                onChange={(e: ChangeEvent<HTMLInputElement>) => updatePerson(p.id, 'bonus', parseFloat(e.target.value) || 0)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => updatePerson(p.id, 'bonus', parseClampedNumber(e.target.value))}
                 className="w-[100px] border border-inputborder rounded-md px-2 py-1.5 text-sm font-mono"
               />
             </div>
@@ -61,7 +65,7 @@ export function IncomePay() {
                 type="number"
                 step={0.5}
                 value={p.contribution401kPct}
-                onChange={(e: ChangeEvent<HTMLInputElement>) => updatePerson(p.id, 'contribution401kPct', parseFloat(e.target.value) || 0)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => updatePerson(p.id, 'contribution401kPct', parseClampedNumber(e.target.value))}
                 className="w-[70px] border border-inputborder rounded-md px-2 py-1.5 text-sm font-mono"
               />
             </div>
@@ -70,7 +74,7 @@ export function IncomePay() {
               <input
                 type="number"
                 value={p.insuranceMonthly}
-                onChange={(e: ChangeEvent<HTMLInputElement>) => updatePerson(p.id, 'insuranceMonthly', parseFloat(e.target.value) || 0)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => updatePerson(p.id, 'insuranceMonthly', parseClampedNumber(e.target.value))}
                 className="w-[90px] border border-inputborder rounded-md px-2 py-1.5 text-sm font-mono"
               />
             </div>

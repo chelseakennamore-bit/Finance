@@ -5,6 +5,7 @@ import { computeHousehold } from '../../lib/derive';
 import { simulatePayoff } from '../../lib/payoff';
 import { exportCSV, importCSV } from '../../lib/csv';
 import { fmt, fmtPct } from '../../lib/format';
+import { parseClampedNumber } from '../../lib/validate';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { NumberCell, RemoveButton, TextCell } from '../ui/EditableCell';
@@ -102,7 +103,7 @@ export function Debt() {
             {debts.map((d) => (
               <tr key={d.id}>
                 <td className="p-1.5 px-2.5 border-b border-rowborder">
-                  <TextCell value={d.name} onChange={(v) => updateDebt(d.id, 'name', v)} />
+                  <TextCell value={d.name} onChange={(v) => updateDebt(d.id, 'name', v)} fallback="Unnamed debt" />
                 </td>
                 <td className="p-1.5 px-2.5 border-b border-rowborder text-right">
                   <NumberCell value={d.balance} onChange={(v) => updateDebt(d.id, 'balance', v)} />
@@ -144,7 +145,7 @@ export function Debt() {
             <input
               type="number"
               value={debtExtraPayment}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => setDebtExtraPayment(parseFloat(e.target.value) || 0)}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setDebtExtraPayment(parseClampedNumber(e.target.value))}
               className="w-[120px] border border-inputborder rounded-md px-2.5 py-[7px] text-sm font-mono"
             />
           </div>

@@ -3,6 +3,7 @@ import type { ChangeEvent } from 'react';
 import { useFinanceStore } from '../../store/financeStore';
 import { projectGoal } from '../../lib/derive';
 import { fmt } from '../../lib/format';
+import { parseClampedNumber } from '../../lib/validate';
 import { Card } from '../ui/Card';
 
 export function Goals() {
@@ -54,7 +55,7 @@ export function Goals() {
             <input
               type="number"
               value={goal.targetAmount}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => setGoalTarget(parseFloat(e.target.value) || 0)}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setGoalTarget(parseClampedNumber(e.target.value))}
               className="w-[140px] border border-inputborder rounded-md px-2.5 py-[7px] text-sm font-mono"
             />
           </div>
@@ -65,7 +66,7 @@ export function Goals() {
                 type="number"
                 step={0.5}
                 value={goal.assumedReturnPct}
-                onChange={(e: ChangeEvent<HTMLInputElement>) => setGoalReturn(parseFloat(e.target.value) || 0)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setGoalReturn(parseClampedNumber(e.target.value))}
                 className="w-[100px] border border-inputborder rounded-md px-2.5 py-[7px] text-sm font-mono"
               />
               <span className="text-[13px]">%</span>

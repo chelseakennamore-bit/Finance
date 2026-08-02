@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type {
   Assets,
+  BackupData,
   Debt,
   DebtStrategy,
   Expense,
@@ -68,6 +69,9 @@ interface FinanceState {
 
   setGoalTarget: (amount: number) => void;
   setGoalReturn: (pct: number) => void;
+
+  exportBackup: () => BackupData;
+  restoreBackup: (data: BackupData) => void;
 }
 
 const initialPeople: Person[] = [
@@ -117,7 +121,7 @@ const initialScenario: Scenario = {
 
 export const useFinanceStore = create<FinanceState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       activeTab: 'overview',
       filingStatus: 'mfj',
       stateTaxRate: 5,
@@ -226,6 +230,27 @@ export const useFinanceStore = create<FinanceState>()(
 
       setGoalTarget: (amount) => set((s) => ({ goal: { ...s.goal, targetAmount: amount } })),
       setGoalReturn: (pct) => set((s) => ({ goal: { ...s.goal, assumedReturnPct: pct } })),
+
+      exportBackup: () => {
+        const s = get();
+        return {
+          filingStatus: s.filingStatus,
+          stateTaxRate: s.stateTaxRate,
+          people: s.people,
+          expenses: s.expenses,
+          debts: s.debts,
+          investments: s.investments,
+          assets: s.assets,
+          scenario: s.scenario,
+          savedScenarios: s.savedScenarios,
+          netWorthHistory: s.netWorthHistory,
+          debtStrategy: s.debtStrategy,
+          debtExtraPayment: s.debtExtraPayment,
+          goal: s.goal,
+          nextId: s.nextId,
+        };
+      },
+      restoreBackup: (data) => set(() => ({ ...data })),
     }),
     { name: 'household-finance', version: 1 }
   )

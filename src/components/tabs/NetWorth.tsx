@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import type { ChangeEvent } from 'react';
 import { useFinanceStore } from '../../store/financeStore';
 import { fmt } from '../../lib/format';
+import { parseClampedNumber } from '../../lib/validate';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { RemoveButton } from '../ui/EditableCell';
@@ -14,7 +15,7 @@ function AssetRow({ label, value, onChange }: { label: string; value: number; on
       <input
         type="number"
         value={value}
-        onChange={(e: ChangeEvent<HTMLInputElement>) => onChange(parseFloat(e.target.value) || 0)}
+        onChange={(e: ChangeEvent<HTMLInputElement>) => onChange(parseClampedNumber(e.target.value))}
         className="w-[130px] text-right border border-inputborder rounded-md px-2 py-1.5 text-sm font-mono"
       />
     </div>

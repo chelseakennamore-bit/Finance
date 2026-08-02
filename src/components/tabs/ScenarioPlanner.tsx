@@ -3,6 +3,7 @@ import type { ChangeEvent } from 'react';
 import { useFinanceStore } from '../../store/financeStore';
 import { computeScenario } from '../../lib/derive';
 import { fmt, fmtSigned } from '../../lib/format';
+import { parseClampedNumber } from '../../lib/validate';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { RemoveButton, TextCell } from '../ui/EditableCell';
@@ -15,7 +16,7 @@ function NumberField({ label, value, onChange }: { label: string; value: number;
       <input
         type="number"
         value={value}
-        onChange={(e: ChangeEvent<HTMLInputElement>) => onChange(parseFloat(e.target.value) || 0)}
+        onChange={(e: ChangeEvent<HTMLInputElement>) => onChange(parseClampedNumber(e.target.value))}
         className="w-[120px] text-right border border-inputborder rounded-md px-2 py-1.5 text-sm font-mono"
       />
     </div>
@@ -50,7 +51,7 @@ function SliderField({
         max={max}
         step={step}
         value={value}
-        onChange={(e: ChangeEvent<HTMLInputElement>) => onChange(parseFloat(e.target.value) || 0)}
+        onChange={(e: ChangeEvent<HTMLInputElement>) => onChange(parseClampedNumber(e.target.value))}
         className="w-full"
       />
       <div className="flex justify-between items-center mt-2">
@@ -58,7 +59,7 @@ function SliderField({
         <input
           type="number"
           value={value}
-          onChange={(e: ChangeEvent<HTMLInputElement>) => onChange(parseFloat(e.target.value) || 0)}
+          onChange={(e: ChangeEvent<HTMLInputElement>) => onChange(parseClampedNumber(e.target.value))}
           className="w-[120px] text-right border border-inputborder rounded-md px-2 py-1.5 text-sm font-mono"
         />
       </div>
@@ -237,7 +238,7 @@ export function ScenarioPlanner() {
                 return (
                   <tr key={sv.id}>
                     <td className="p-1.5 px-2.5 border-b border-rowborder">
-                      <TextCell value={sv.label} onChange={(v) => updateSavedScenarioLabel(sv.id, v)} />
+                      <TextCell value={sv.label} onChange={(v) => updateSavedScenarioLabel(sv.id, v)} fallback="Untitled scenario" />
                     </td>
                     <td className="p-1.5 px-2.5 text-sm text-right font-mono border-b border-rowborder">{fmt(out.grossTotal)}</td>
                     <td className="p-1.5 px-2.5 text-sm text-right font-mono border-b border-rowborder">{fmt(out.netMonthly)}</td>
