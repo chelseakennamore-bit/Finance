@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="7" fill="oklch(24% 0.02 50)"/>
+  <rect x="7" y="18" width="5" height="8" rx="1.5" fill="oklch(58% 0.1 40)"/>
+  <rect x="14" y="12" width="5" height="14" rx="1.5" fill="oklch(64% 0.1 40)"/>
+  <rect x="21" y="6" width="5" height="20" rx="1.5" fill="oklch(70% 0.1 40)"/>
+</svg>
