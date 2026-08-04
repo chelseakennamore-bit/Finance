@@ -86,9 +86,9 @@ export function Taxes() {
         </table>
       </Card>
       <p className="text-xs text-subtle m-0">
-        Uses estimated 2026 IRS brackets, standard deductions, and Social Security wage base — confirm against the
-        final published figures each fall. State tax is a simplified flat rate, not real bracket math. Excludes
-        credits. Additional Medicare threshold for {filingStatus}: {addlMedThresholdFmt}.
+        Uses confirmed 2026 IRS brackets, standard deductions, and Social Security wage base (Revenue Procedure
+        2025-32). State tax is a simplified flat rate, not real bracket math. Excludes credits. Additional Medicare
+        threshold for {filingStatus}: {addlMedThresholdFmt}.
       </p>
     </div>
   );

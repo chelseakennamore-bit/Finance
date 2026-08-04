@@ -1,16 +1,16 @@
 import type { FilingStatus } from './types';
 
-/** Configurable Social Security wage base estimate for the current tax year. */
+/** Social Security wage base for tax year 2026, per SSA's October 2025 announcement. */
 export const SS_WAGE_BASE_ESTIMATE = 184500;
 
-/** 2026 estimated federal marginal brackets: [rate, cumulative income cap]. */
+/** 2026 federal marginal brackets per IRS Revenue Procedure 2025-32: [rate, cumulative income cap]. */
 export const BRACKETS: Record<FilingStatus, [number, number][]> = {
   single: [[0.10, 12400], [0.12, 50400], [0.22, 105700], [0.24, 201775], [0.32, 256225], [0.35, 640600], [0.37, Infinity]],
   mfj: [[0.10, 24800], [0.12, 100800], [0.22, 211400], [0.24, 403550], [0.32, 512450], [0.35, 768700], [0.37, Infinity]],
   hoh: [[0.10, 17700], [0.12, 67450], [0.22, 105700], [0.24, 201750], [0.32, 256200], [0.35, 640600], [0.37, Infinity]],
 };
 
-/** 2026 estimated standard deduction per filing status. */
+/** 2026 standard deduction per filing status, per IRS Revenue Procedure 2025-32. */
 export const STD_DED: Record<FilingStatus, number> = { single: 16100, mfj: 32200, hoh: 24150 };
 
 /** Additional Medicare (0.9%) applies above these thresholds. */
