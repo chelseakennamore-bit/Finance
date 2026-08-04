@@ -18,6 +18,16 @@ import { fetchCloudData, saveCloudData } from '../lib/cloudSync';
 
 const LEGACY_LOCAL_STORAGE_KEY = 'household-finance';
 
+/** Normalizes older stored shapes (a single `goal` object, pre-dating the goals list) into
+ * the current `goals` array so existing cloud/localStorage data keeps working after upgrade. */
+function migrateGoals(data: any): Goal[] {
+  if (Array.isArray(data?.goals) && data.goals.length > 0) return data.goals;
+  if (data?.goal) {
+    return [{ id: 1, label: 'Primary goal', targetAmount: data.goal.targetAmount, assumedReturnPct: data.goal.assumedReturnPct }];
+  }
+  return [{ id: 1, label: 'Primary goal', targetAmount: 50000, assumedReturnPct: 6 }];
+}
+
 interface FinanceState {
   hydrated: boolean;
   activeTab: TabKey;
@@ -35,7 +45,7 @@ interface FinanceState {
   debtExtraPayment: number;
   consolidationApr: number;
   consolidationTermMonths: number;
-  goal: Goal;
+  goals: Goal[];
   nextId: number;
 
   hydrate: () => Promise<void>;
@@ -80,8 +90,9 @@ interface FinanceState {
   saveNetWorthSnapshot: (assets: number, liabilities: number, netWorth: number) => void;
   removeSnapshot: (id: number) => void;
 
-  setGoalTarget: (amount: number) => void;
-  setGoalReturn: (pct: number) => void;
+  addGoal: () => void;
+  removeGoal: (id: number) => void;
+  updateGoal: <K extends keyof Goal>(id: number, field: K, value: Goal[K]) => void;
 
   exportBackup: () => BackupData;
   restoreBackup: (data: BackupData) => void;
@@ -153,7 +164,7 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
   debtExtraPayment: 200,
   consolidationApr: 9,
   consolidationTermMonths: 60,
-  goal: { targetAmount: 50000, assumedReturnPct: 6 },
+  goals: [{ id: 1, label: 'Primary goal', targetAmount: 50000, assumedReturnPct: 6 }],
   nextId: 100,
 
   hydrate: async () => {
@@ -161,7 +172,7 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
       const cloud = await fetchCloudData();
       if (cloud) {
         applyingRemote = true;
-        set({ ...cloud, hydrated: true });
+        set({ ...cloud, goals: migrateGoals(cloud), hydrated: true });
         applyingRemote = false;
         return;
       }
@@ -176,7 +187,7 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
         const state = JSON.parse(legacy).state;
         if (state) {
           applyingRemote = true;
-          set({ ...state, hydrated: true });
+          set({ ...state, goals: migrateGoals(state), hydrated: true });
           applyingRemote = false;
           saveCloudData(get().exportBackup()).catch((e) => console.error('Cloud seed failed', e));
           return;
@@ -196,7 +207,7 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
       const cloud = await fetchCloudData();
       if (cloud) {
         applyingRemote = true;
-        set({ ...cloud });
+        set({ ...cloud, goals: migrateGoals(cloud) });
         applyingRemote = false;
       }
     } catch (e) {
@@ -302,8 +313,14 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
     })),
   removeSnapshot: (id) => set((s) => ({ netWorthHistory: s.netWorthHistory.filter((h) => h.id !== id) })),
 
-  setGoalTarget: (amount) => set((s) => ({ goal: { ...s.goal, targetAmount: amount } })),
-  setGoalReturn: (pct) => set((s) => ({ goal: { ...s.goal, assumedReturnPct: pct } })),
+  addGoal: () =>
+    set((s) => ({
+      goals: [...s.goals, { id: s.nextId, label: 'New goal', targetAmount: 10000, assumedReturnPct: 6 }],
+      nextId: s.nextId + 1,
+    })),
+  removeGoal: (id) => set((s) => ({ goals: s.goals.filter((g) => g.id !== id) })),
+  updateGoal: (id, field, value) =>
+    set((s) => ({ goals: s.goals.map((g) => (g.id === id ? { ...g, [field]: value } : g)) })),
 
   exportBackup: () => {
     const s = get();
@@ -322,11 +339,11 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
       debtExtraPayment: s.debtExtraPayment,
       consolidationApr: s.consolidationApr,
       consolidationTermMonths: s.consolidationTermMonths,
-      goal: s.goal,
+      goals: s.goals,
       nextId: s.nextId,
     };
   },
-  restoreBackup: (data) => set(() => ({ ...data })),
+  restoreBackup: (data) => set(() => ({ ...data, goals: migrateGoals(data) })),
 }));
 
 let saveTimer: ReturnType<typeof setTimeout> | null = null;

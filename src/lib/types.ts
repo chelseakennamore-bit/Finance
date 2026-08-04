@@ -80,6 +80,8 @@ export interface NetWorthSnapshot {
 }
 
 export interface Goal {
+  id: number;
+  label: string;
   targetAmount: number;
   assumedReturnPct: number;
 }
@@ -99,6 +101,6 @@ export interface BackupData {
   debtExtraPayment: number;
   consolidationApr: number;
   consolidationTermMonths: number;
-  goal: Goal;
+  goals: Goal[];
   nextId: number;
 }

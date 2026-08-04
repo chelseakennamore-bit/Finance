@@ -40,8 +40,7 @@ export function isValidBackup(data: unknown): data is BackupData {
     d.assets !== null &&
     typeof d.scenario === 'object' &&
     d.scenario !== null &&
-    typeof d.goal === 'object' &&
-    d.goal !== null &&
+    (Array.isArray(d.goals) || (typeof d.goal === 'object' && d.goal !== null)) &&
     typeof d.nextId === 'number'
   );
 }

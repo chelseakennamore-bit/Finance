@@ -6,7 +6,30 @@ import { parseClampedNumber } from '../../lib/validate';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { RemoveButton } from '../ui/EditableCell';
-import type { Assets } from '../../lib/types';
+import type { Assets, NetWorthSnapshot } from '../../lib/types';
+
+function NetWorthTrend({ history }: { history: NetWorthSnapshot[] }) {
+  if (history.length < 2) return null;
+  const maxAbs = Math.max(...history.map((h) => Math.abs(h.netWorth)), 1);
+  return (
+    <Card className="p-6">
+      <div className="text-[13px] font-semibold mb-4">Net worth trend</div>
+      <div className="flex items-end gap-2 h-[160px]">
+        {history.map((h) => {
+          const heightPct = Math.max(4, (Math.abs(h.netWorth) / maxAbs) * 100);
+          const color = h.netWorth >= 0 ? 'oklch(56% 0.09 145)' : 'oklch(50% 0.16 25)';
+          return (
+            <div key={h.id} className="flex-1 flex flex-col items-center justify-end h-full gap-1 min-w-0">
+              <div className="text-[10px] font-mono text-muted whitespace-nowrap">{fmt(h.netWorth)}</div>
+              <div className="w-full rounded-t-sm" style={{ height: `${heightPct}%`, background: color }} />
+              <div className="text-[10px] text-subtle mt-1 whitespace-nowrap">{h.date}</div>
+            </div>
+          );
+        })}
+      </div>
+    </Card>
+  );
+}
 
 function AssetRow({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
   return (
@@ -85,6 +108,8 @@ export function NetWorth() {
         <div className="text-[15px] font-semibold">Net worth</div>
         <div className="text-[28px] font-bold font-mono">{fmt(netWorth)}</div>
       </div>
+
+      <NetWorthTrend history={netWorthHistory} />
 
       <Card className="p-6">
         <div className="flex justify-between items-center mb-3.5">

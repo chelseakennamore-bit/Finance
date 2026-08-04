@@ -9,6 +9,15 @@ import { NumberCell, RemoveButton, TextCell } from '../ui/EditableCell';
 import { StatTile } from '../ui/StatTile';
 import type { Investment } from '../../lib/types';
 
+const ALLOCATION_COLORS = [
+  'oklch(58% 0.1 40)',
+  'oklch(56% 0.09 145)',
+  'oklch(55% 0.12 250)',
+  'oklch(60% 0.12 300)',
+  'oklch(55% 0.14 25)',
+  'oklch(65% 0.12 90)',
+];
+
 export function Investments() {
   const investments = useFinanceStore((s) => s.investments);
   const updateInvestment = useFinanceStore((s) => s.updateInvestment);
@@ -18,6 +27,17 @@ export function Investments() {
 
   const totalInvestments = useMemo(() => investments.reduce((sum, v) => sum + v.balance, 0), [investments]);
   const totalMonthlyContribution = useMemo(() => investments.reduce((sum, v) => sum + v.contribution, 0), [investments]);
+
+  const allocationByType = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const v of investments) {
+      const type = v.type.trim() || 'Other';
+      map.set(type, (map.get(type) || 0) + v.balance);
+    }
+    return Array.from(map.entries())
+      .map(([type, balance]) => ({ type, balance }))
+      .sort((a, b) => b.balance - a.balance);
+  }, [investments]);
 
   const handleImport = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -88,6 +108,33 @@ export function Investments() {
         <StatTile label="Total balance" value={fmt(totalInvestments)} />
         <StatTile label="Monthly contributions" value={fmt(totalMonthlyContribution)} />
       </div>
+
+      {totalInvestments > 0 && (
+        <Card className="p-6">
+          <div className="text-[13px] font-semibold mb-3">Allocation by type</div>
+          <div className="flex w-full h-3.5 rounded-full overflow-hidden" style={{ background: 'oklch(92% 0.008 70)' }}>
+            {allocationByType.map((a, i) => (
+              <div
+                key={a.type}
+                className="h-3.5"
+                style={{ background: ALLOCATION_COLORS[i % ALLOCATION_COLORS.length], width: `${(a.balance / totalInvestments) * 100}%` }}
+                title={`${a.type}: ${fmt(a.balance)}`}
+              />
+            ))}
+          </div>
+          <div className="flex gap-x-5 gap-y-1.5 mt-3 text-xs font-mono text-muted flex-wrap">
+            {allocationByType.map((a, i) => (
+              <div key={a.type} className="flex items-center gap-1.5">
+                <span
+                  className="inline-block w-2.5 h-2.5 rounded-full"
+                  style={{ background: ALLOCATION_COLORS[i % ALLOCATION_COLORS.length] }}
+                />
+                {a.type}: {((a.balance / totalInvestments) * 100).toFixed(0)}%
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       <Card className="px-4 py-2">
         <table className="w-full border-collapse">
