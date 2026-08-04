@@ -55,6 +55,25 @@ export function Investments() {
           >
             Export CSV
           </Button>
+          <Button
+            onClick={() =>
+              exportCSV(
+                'investments-template.csv',
+                [
+                  { id: 0, name: '401(k)', type: '401(k)', balance: 50000, contribution: 500 },
+                  { id: 0, name: 'Roth IRA', type: 'Roth IRA', balance: 20000, contribution: 300 },
+                ],
+                [
+                  { key: 'name', label: 'Name' },
+                  { key: 'type', label: 'Type' },
+                  { key: 'balance', label: 'Balance' },
+                  { key: 'contribution', label: 'Contribution' },
+                ]
+              )
+            }
+          >
+            Download template
+          </Button>
           <label className="px-3.5 py-2 rounded-md border border-inputborder bg-tile text-tile-text text-[13px] cursor-pointer">
             Import CSV
             <input type="file" accept=".csv" onChange={handleImport} className="hidden" />

@@ -55,6 +55,23 @@ export function BudgetExpenses() {
           >
             Export CSV
           </Button>
+          <Button
+            onClick={() =>
+              exportCSV(
+                'expenses-template.csv',
+                [
+                  { id: 0, category: 'Rent', monthly: 2000 },
+                  { id: 0, category: 'Groceries', monthly: 600 },
+                ],
+                [
+                  { key: 'category', label: 'Category' },
+                  { key: 'monthly', label: 'Monthly' },
+                ]
+              )
+            }
+          >
+            Download template
+          </Button>
           <label className="px-3.5 py-2 rounded-md border border-inputborder bg-tile text-tile-text text-[13px] cursor-pointer">
             Import CSV
             <input type="file" accept=".csv" onChange={handleImport} className="hidden" />

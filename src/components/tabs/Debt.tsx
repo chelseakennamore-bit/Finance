@@ -114,6 +114,25 @@ export function Debt() {
           >
             Export CSV
           </Button>
+          <Button
+            onClick={() =>
+              exportCSV(
+                'debts-template.csv',
+                [
+                  { id: 0, name: 'Credit Card', balance: 5000, apr: 22.9, minPayment: 150 },
+                  { id: 0, name: 'Car Loan', balance: 15000, apr: 6.5, minPayment: 350 },
+                ],
+                [
+                  { key: 'name', label: 'Name' },
+                  { key: 'balance', label: 'Balance' },
+                  { key: 'apr', label: 'APR' },
+                  { key: 'minPayment', label: 'MinPayment' },
+                ]
+              )
+            }
+          >
+            Download template
+          </Button>
           <label className="px-3.5 py-2 rounded-md border border-inputborder bg-tile text-tile-text text-[13px] cursor-pointer">
             Import CSV
             <input type="file" accept=".csv" onChange={handleImport} className="hidden" />
