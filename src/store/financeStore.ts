@@ -15,6 +15,7 @@ import type {
   TabKey,
 } from '../lib/types';
 import { fetchCloudData, saveCloudData } from '../lib/cloudSync';
+import { isValidBackup } from '../lib/backup';
 
 const LEGACY_LOCAL_STORAGE_KEY = 'household-finance';
 
@@ -171,6 +172,11 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
     try {
       const cloud = await fetchCloudData();
       if (cloud) {
+        if (!isValidBackup(cloud)) {
+          console.error('Cloud data failed validation — ignoring it and falling back to defaults', cloud);
+          set({ hydrated: true });
+          return;
+        }
         applyingRemote = true;
         set({ ...cloud, goals: migrateGoals(cloud), hydrated: true });
         applyingRemote = false;
@@ -206,6 +212,10 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
     try {
       const cloud = await fetchCloudData();
       if (cloud) {
+        if (!isValidBackup(cloud)) {
+          console.error('Cloud data failed validation on refetch — ignoring it', cloud);
+          return;
+        }
         applyingRemote = true;
         set({ ...cloud, goals: migrateGoals(cloud) });
         applyingRemote = false;

@@ -21,6 +21,7 @@ export default function middleware(request: Request) {
     status: 401,
     headers: {
       'WWW-Authenticate': 'Basic realm="Household Finance"',
+      'Strict-Transport-Security': 'max-age=63072000; includeSubDomains; preload',
       'X-Frame-Options': 'DENY',
       'X-Content-Type-Options': 'nosniff',
       'Referrer-Policy': 'strict-origin-when-cross-origin',
