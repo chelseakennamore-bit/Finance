@@ -25,26 +25,28 @@ export function Sidebar() {
   const setStateTaxRate = useFinanceStore((s) => s.setStateTaxRate);
 
   return (
-    <div className="w-[230px] shrink-0 bg-sidebar px-3.5 py-6.5 flex flex-col gap-[3px] overflow-y-auto">
-      <div className="text-[15px] font-bold text-sidebar-title px-3 pb-[22px] tracking-wide">Household Finance</div>
-      {NAV_ITEMS.map((item) => {
-        const isActive = item.key === activeTab;
-        return (
-          <div
-            key={item.key}
-            onClick={() => setTab(item.key)}
-            className="flex items-center px-3 py-2.5 rounded-lg cursor-pointer text-sm"
-            style={{
-              background: isActive ? 'oklch(32% 0.03 45)' : 'transparent',
-              color: isActive ? 'oklch(97% 0.01 75)' : 'oklch(78% 0.012 75)',
-              fontWeight: isActive ? 600 : 400,
-            }}
-          >
-            {item.label}
-          </div>
-        );
-      })}
-      <div className="mt-5 pt-3.5 px-3 text-[11px] text-sidebar-muted border-t border-sidebar-border">
+    <div className="w-full md:w-[230px] md:shrink-0 bg-sidebar px-3.5 py-4 md:py-6.5 flex flex-col gap-3 md:gap-[3px] md:h-screen md:overflow-y-auto">
+      <div className="text-[15px] font-bold text-sidebar-title px-3 md:pb-[22px] tracking-wide">Household Finance</div>
+      <div className="flex flex-row md:flex-col gap-1 md:gap-[3px] overflow-x-auto md:overflow-visible">
+        {NAV_ITEMS.map((item) => {
+          const isActive = item.key === activeTab;
+          return (
+            <div
+              key={item.key}
+              onClick={() => setTab(item.key)}
+              className="flex items-center px-3 py-2.5 rounded-lg cursor-pointer text-sm whitespace-nowrap shrink-0 md:whitespace-normal md:shrink"
+              style={{
+                background: isActive ? 'oklch(32% 0.03 45)' : 'transparent',
+                color: isActive ? 'oklch(97% 0.01 75)' : 'oklch(78% 0.012 75)',
+                fontWeight: isActive ? 600 : 400,
+              }}
+            >
+              {item.label}
+            </div>
+          );
+        })}
+      </div>
+      <div className="mt-1 md:mt-5 pt-3.5 px-3 text-[11px] text-sidebar-muted border-t border-sidebar-border">
         Household filing status
         <select
           value={filingStatus}

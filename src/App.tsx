@@ -27,9 +27,9 @@ export default function App() {
   const ActiveComponent = TAB_COMPONENTS[activeTab];
 
   return (
-    <div className="flex h-screen bg-cream font-sans text-body">
+    <div className="flex flex-col md:flex-row min-h-screen md:h-screen bg-cream font-sans text-body">
       <Sidebar />
-      <div className="flex-1 overflow-y-auto px-12 py-10">
+      <div className="flex-1 overflow-y-auto px-4 md:px-12 py-6 md:py-10">
         <div className="max-w-[1180px] mx-auto flex flex-col gap-6">
           <ActiveComponent />
         </div>

@@ -46,7 +46,7 @@ export function NetWorth() {
         <p className="text-sm text-muted mt-1 mb-0">Assets minus liabilities, right now.</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <Card className="p-5">
           <div className="text-[13px] font-semibold mb-3">Assets</div>
           <div className="flex flex-col gap-2.5">

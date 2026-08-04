@@ -101,7 +101,7 @@ export function ScenarioPlanner() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <SliderField
           label="Partner A salary"
           value={scenario.salaryA}
