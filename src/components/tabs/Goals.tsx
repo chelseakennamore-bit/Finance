@@ -21,6 +21,7 @@ export function Goals() {
   const addGoal = useFinanceStore((s) => s.addGoal);
   const removeGoal = useFinanceStore((s) => s.removeGoal);
   const updateGoal = useFinanceStore((s) => s.updateGoal);
+  const setGoalInvestmentIncluded = useFinanceStore((s) => s.setGoalInvestmentIncluded);
 
   const totalMonthlyExpenses = useMemo(() => expenses.reduce((sum, x) => sum + x.monthly, 0), [expenses]);
   const emergencyMonths = totalMonthlyExpenses ? assets.cash / totalMonthlyExpenses : 0;
@@ -43,8 +44,6 @@ export function Goals() {
     emergencyTimeFmt = monthsToTarget > 600 ? '600+ mo' : `${Math.floor(monthsToTarget / 12)}y ${monthsToTarget % 12}m`;
   }
 
-  const totalInvestments = useMemo(() => investments.reduce((sum, v) => sum + v.balance, 0), [investments]);
-  const totalMonthlyContribution = useMemo(() => investments.reduce((sum, v) => sum + v.contribution, 0), [investments]);
 
   return (
     <div className="flex flex-col gap-5">
@@ -119,7 +118,11 @@ export function Goals() {
       )}
 
       {goals.map((goal) => {
-        const projection = projectGoal(totalInvestments, totalMonthlyContribution, goal.targetAmount, goal.assumedReturnPct);
+        const excluded = goal.excludedInvestmentIds || [];
+        const goalInvestments = investments.filter((v) => !excluded.includes(v.id));
+        const goalTotalInvestments = goalInvestments.reduce((sum, v) => sum + v.balance, 0);
+        const goalMonthlyContribution = goalInvestments.reduce((sum, v) => sum + v.contribution, 0);
+        const projection = projectGoal(goalTotalInvestments, goalMonthlyContribution, goal.targetAmount, goal.assumedReturnPct);
         const goalTimeFmt = projection.alreadyMet
           ? 'Already met'
           : projection.reached
@@ -163,20 +166,39 @@ export function Goals() {
                 </span>
               </div>
             </div>
-            <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
+            <div className="grid gap-4 mb-4.5" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
               <div>
                 <div className="text-xs uppercase text-muted">Current investments</div>
-                <div className="text-xl font-bold font-mono mt-1">{fmt(totalInvestments)}</div>
+                <div className="text-xl font-bold font-mono mt-1">{fmt(goalTotalInvestments)}</div>
               </div>
               <div>
                 <div className="text-xs uppercase text-muted">Contributing / mo</div>
-                <div className="text-xl font-bold font-mono mt-1">{fmt(totalMonthlyContribution)}</div>
+                <div className="text-xl font-bold font-mono mt-1">{fmt(goalMonthlyContribution)}</div>
               </div>
               <div>
                 <div className="text-xs uppercase text-muted">Time to goal</div>
                 <div className="text-xl font-bold font-mono mt-1">{goalTimeFmt}</div>
               </div>
             </div>
+
+            {investments.length > 0 && (
+              <div className="border-t border-border pt-3.5">
+                <div className="text-xs text-muted mb-2">Investments counted toward this goal</div>
+                <div className="flex flex-col gap-1.5">
+                  {investments.map((v) => (
+                    <label key={v.id} className="flex items-center gap-2 text-sm cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={!excluded.includes(v.id)}
+                        onChange={(e: ChangeEvent<HTMLInputElement>) => setGoalInvestmentIncluded(goal.id, v.id, e.target.checked)}
+                      />
+                      <span>{v.name}</span>
+                      <span className="text-muted font-mono text-xs">{fmt(v.balance)}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
           </Card>
         );
       })}

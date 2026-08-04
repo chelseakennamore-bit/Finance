@@ -84,6 +84,9 @@ export interface Goal {
   label: string;
   targetAmount: number;
   assumedReturnPct: number;
+  /** Investment account ids excluded from this goal's progress tracking. Undefined/empty means
+   * all current accounts count — the default "autofill" behavior. */
+  excludedInvestmentIds?: number[];
 }
 
 export interface MonthlyActualEntry {

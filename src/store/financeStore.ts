@@ -112,6 +112,7 @@ interface FinanceState {
   addGoal: () => void;
   removeGoal: (id: number) => void;
   updateGoal: <K extends keyof Goal>(id: number, field: K, value: Goal[K]) => void;
+  setGoalInvestmentIncluded: (goalId: number, investmentId: number, included: boolean) => void;
 
   setEmergencyFundTargetMonths: (months: number) => void;
 
@@ -380,6 +381,16 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
   removeGoal: (id) => set((s) => ({ goals: s.goals.filter((g) => g.id !== id) })),
   updateGoal: (id, field, value) =>
     set((s) => ({ goals: s.goals.map((g) => (g.id === id ? { ...g, [field]: value } : g)) })),
+  setGoalInvestmentIncluded: (goalId, investmentId, included) =>
+    set((s) => ({
+      goals: s.goals.map((g) => {
+        if (g.id !== goalId) return g;
+        const excluded = new Set(g.excludedInvestmentIds || []);
+        if (included) excluded.delete(investmentId);
+        else excluded.add(investmentId);
+        return { ...g, excludedInvestmentIds: Array.from(excluded) };
+      }),
+    })),
 
   setEmergencyFundTargetMonths: (months) => set({ emergencyFundTargetMonths: months }),
 
