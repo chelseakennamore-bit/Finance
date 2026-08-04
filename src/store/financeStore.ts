@@ -58,6 +58,9 @@ interface FinanceState {
   setDebts: (rows: Debt[]) => void;
   setDebtStrategy: (strategy: DebtStrategy) => void;
   setDebtExtraPayment: (amount: number) => void;
+  /** Rolling a debt into consolidation also takes it out of the individual payoff plan
+   * (it's being replaced by the new loan), and un-rolling restores it. */
+  setDebtConsolidation: (id: number, included: boolean) => void;
   setConsolidationApr: (apr: number) => void;
   setConsolidationTermMonths: (months: number) => void;
 
@@ -229,6 +232,12 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
   setDebts: (rows) => set((s) => ({ debts: rows, nextId: s.nextId + rows.length })),
   setDebtStrategy: (strategy) => set({ debtStrategy: strategy }),
   setDebtExtraPayment: (amount) => set({ debtExtraPayment: amount }),
+  setDebtConsolidation: (id, included) =>
+    set((s) => ({
+      debts: s.debts.map((d) =>
+        d.id === id ? { ...d, includeInConsolidation: included, includeInPayoff: !included } : d
+      ),
+    })),
   setConsolidationApr: (apr) => set({ consolidationApr: apr }),
   setConsolidationTermMonths: (months) => set({ consolidationTermMonths: months }),
 

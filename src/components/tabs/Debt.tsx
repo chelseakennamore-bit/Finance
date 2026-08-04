@@ -24,6 +24,7 @@ export function Debt() {
   const consolidationTermMonths = useFinanceStore((s) => s.consolidationTermMonths);
   const setDebtStrategy = useFinanceStore((s) => s.setDebtStrategy);
   const setDebtExtraPayment = useFinanceStore((s) => s.setDebtExtraPayment);
+  const setDebtConsolidation = useFinanceStore((s) => s.setDebtConsolidation);
   const setConsolidationApr = useFinanceStore((s) => s.setConsolidationApr);
   const setConsolidationTermMonths = useFinanceStore((s) => s.setConsolidationTermMonths);
   const updateDebt = useFinanceStore((s) => s.updateDebt);
@@ -49,6 +50,33 @@ export function Debt() {
     [consolidationDebts, consolidationApr, consolidationTermMonths]
   );
   const monthlyPaymentChange = consolidation.newMonthlyPayment - consolidation.currentMinPayments;
+
+  // "Without consolidating": restore consolidated debts to individual payoff, same as if the
+  // consolidation checkboxes had never been touched.
+  const withoutConsolidatingDebts = useMemo(
+    () => debts.filter((d) => d.includeInPayoff !== false || d.includeInConsolidation === true),
+    [debts]
+  );
+  const withoutConsolidatingPayoff = useMemo(
+    () => simulatePayoff(withoutConsolidatingDebts, debtStrategy, debtExtraPayment),
+    [withoutConsolidatingDebts, debtStrategy, debtExtraPayment]
+  );
+
+  // "With consolidation": the already-synced payoff plan (which excludes rolled-in debts) plus
+  // one synthetic debt standing in for the new consolidation loan.
+  const withConsolidationPayoff = useMemo(() => {
+    if (consolidationDebts.length === 0) return payoff;
+    const syntheticLoan = {
+      id: -1,
+      name: 'Consolidated loan',
+      balance: consolidation.totalBalance,
+      apr: consolidationApr,
+      minPayment: consolidation.newMonthlyPayment,
+    };
+    return simulatePayoff([...payoffDebts, syntheticLoan], debtStrategy, debtExtraPayment);
+  }, [payoffDebts, consolidationDebts.length, consolidation, consolidationApr, debtStrategy, debtExtraPayment, payoff]);
+
+  const interestSaved = withoutConsolidatingPayoff.totalInterest - withConsolidationPayoff.totalInterest;
 
   const handleImport = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -234,8 +262,8 @@ export function Debt() {
                   <input
                     type="checkbox"
                     checked={d.includeInConsolidation === true}
-                    onChange={(e: ChangeEvent<HTMLInputElement>) => updateDebt(d.id, 'includeInConsolidation', e.target.checked)}
-                    title="Roll this debt into the consolidation loan"
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => setDebtConsolidation(d.id, e.target.checked)}
+                    title="Roll this debt into the consolidation loan (removes it from the individual payoff plan)"
                   />
                 </td>
                 <td className="py-1.5 px-2.5 text-sm border-b border-rowborder">{d.name}</td>
@@ -300,6 +328,50 @@ export function Debt() {
                 >
                   {monthlyPaymentChange <= 0 ? '-' : '+'}
                   {fmt(Math.abs(monthlyPaymentChange))}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-5 pt-4 border-t border-border">
+              <div className="text-[13px] font-semibold mb-3.5">
+                Payoff plan: without vs. with consolidating
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <div className="text-xs uppercase text-muted mb-2">Without consolidating</div>
+                  <div className="flex gap-6">
+                    <div>
+                      <div className="text-[11px] uppercase text-muted">Debt-free in</div>
+                      <div className="text-lg font-bold font-mono mt-0.5">{withoutConsolidatingPayoff.months} mo</div>
+                    </div>
+                    <div>
+                      <div className="text-[11px] uppercase text-muted">Total interest</div>
+                      <div className="text-lg font-bold font-mono mt-0.5">{fmt(withoutConsolidatingPayoff.totalInterest)}</div>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs uppercase text-muted mb-2">With consolidating</div>
+                  <div className="flex gap-6">
+                    <div>
+                      <div className="text-[11px] uppercase text-muted">Debt-free in</div>
+                      <div className="text-lg font-bold font-mono mt-0.5">{withConsolidationPayoff.months} mo</div>
+                    </div>
+                    <div>
+                      <div className="text-[11px] uppercase text-muted">Total interest</div>
+                      <div className="text-lg font-bold font-mono mt-0.5">{fmt(withConsolidationPayoff.totalInterest)}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <div className="text-xs uppercase text-muted">Interest saved by consolidating</div>
+                <div
+                  className="text-xl font-bold font-mono mt-1"
+                  style={{ color: interestSaved >= 0 ? 'oklch(46% 0.1 145)' : 'oklch(50% 0.16 25)' }}
+                >
+                  {interestSaved >= 0 ? '+' : '-'}
+                  {fmt(Math.abs(interestSaved))}
                 </div>
               </div>
             </div>
