@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { useFinanceStore } from './store/financeStore';
 import { Overview } from './components/tabs/Overview';
@@ -24,7 +25,25 @@ const TAB_COMPONENTS = {
 
 export default function App() {
   const activeTab = useFinanceStore((s) => s.activeTab);
+  const hydrated = useFinanceStore((s) => s.hydrated);
+  const hydrate = useFinanceStore((s) => s.hydrate);
+  const refetchFromCloud = useFinanceStore((s) => s.refetchFromCloud);
   const ActiveComponent = TAB_COMPONENTS[activeTab];
+
+  useEffect(() => {
+    hydrate();
+    const onFocus = () => refetchFromCloud();
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, [hydrate, refetchFromCloud]);
+
+  if (!hydrated) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-cream font-sans text-body">
+        <div className="text-sm text-muted">Loading household data…</div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen md:h-screen bg-cream font-sans text-body">

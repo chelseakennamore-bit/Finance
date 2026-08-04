@@ -21,7 +21,7 @@ export function BackupControls() {
           alert("That file doesn't look like a Household Finance backup.");
           return;
         }
-        if (confirm('Restoring this backup will replace all current data. Continue?')) {
+        if (confirm('Restoring this backup will replace all shared household data for everyone. Continue?')) {
           restoreBackup(data);
         }
       },
