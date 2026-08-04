@@ -1,5 +1,6 @@
 import type { FilingStatus, Person, Scenario } from './types';
 import { STD_DED, marginalTax, baseFica, addlMedicare } from './taxCalc';
+import { computeAlabamaTax, type AlTaxResult } from './stateTax';
 
 export interface PersonCalc extends Person {
   grossWithBonus: number;
@@ -32,6 +33,8 @@ export interface HouseholdCalc {
   /** Excludes bonus — recurring pay only, so a once-a-year bonus doesn't inflate ongoing cash flow. */
   netMonthlyHousehold: number;
   netBiweeklyHousehold: number;
+  /** Set only when state === 'AL' — Alabama's actual standard deduction/exemption/bracket breakdown. */
+  alBreakdown?: AlTaxResult;
 }
 
 interface HouseholdCore {
@@ -46,9 +49,12 @@ interface HouseholdCore {
   addlMed: number;
   totalPretaxDeductions: number;
   netAnnualHousehold: number;
+  alBreakdown?: AlTaxResult;
 }
 
-function computeHouseholdCore(people: Person[], filingStatus: FilingStatus, stateTaxRate: number): HouseholdCore {
+/** `taxState === 'AL'` switches state tax from the flat `stateTaxRate` to real Alabama bracket
+ * math (see stateTax.ts); any other value (including '' / undefined) keeps the flat rate. */
+function computeHouseholdCore(people: Person[], filingStatus: FilingStatus, stateTaxRate: number, taxState?: string): HouseholdCore {
   const totalGrossAnnual = people.reduce((sum, p) => sum + p.salary + (p.bonus || 0), 0);
 
   const base = people.map((p) => {
@@ -65,7 +71,8 @@ function computeHouseholdCore(people: Person[], filingStatus: FilingStatus, stat
   const stdDeduction = STD_DED[filingStatus];
   const taxableIncome = Math.max(0, totalFedWages - stdDeduction);
   const federalTaxAnnual = marginalTax(taxableIncome, filingStatus);
-  const stateTaxAnnual = (taxableIncome * (stateTaxRate || 0)) / 100;
+  const alBreakdown = taxState === 'AL' ? computeAlabamaTax(totalFedWages, filingStatus) : undefined;
+  const stateTaxAnnual = alBreakdown ? alBreakdown.tax : (taxableIncome * (stateTaxRate || 0)) / 100;
   const effectiveRate = totalGrossAnnual ? (federalTaxAnnual / totalGrossAnnual) * 100 : 0;
   const totalBaseFica = base.reduce((sum, p) => sum + baseFica(p.ficaWages).total, 0);
   const addlMed = addlMedicare(totalFicaWages, filingStatus);
@@ -94,6 +101,7 @@ function computeHouseholdCore(people: Person[], filingStatus: FilingStatus, stat
     addlMed,
     totalPretaxDeductions,
     netAnnualHousehold,
+    alBreakdown,
   };
 }
 
@@ -103,12 +111,18 @@ function computeHouseholdCore(people: Person[], filingStatus: FilingStatus, stat
  * Bonuses are treated as a once-a-year payment: Annual figures include the full year
  * (bonus and its tax impact included), while Monthly/Biweekly figures are computed from a
  * second, bonus-free pass so a lump-sum bonus doesn't inflate the recurring-paycheck totals. */
-export function computeHousehold(people: Person[], filingStatus: FilingStatus, stateTaxRate: number): HouseholdCalc {
-  const withBonus = computeHouseholdCore(people, filingStatus, stateTaxRate);
+export function computeHousehold(
+  people: Person[],
+  filingStatus: FilingStatus,
+  stateTaxRate: number,
+  taxState?: string
+): HouseholdCalc {
+  const withBonus = computeHouseholdCore(people, filingStatus, stateTaxRate, taxState);
   const recurring = computeHouseholdCore(
     people.map((p) => ({ ...p, bonus: 0 })),
     filingStatus,
-    stateTaxRate
+    stateTaxRate,
+    taxState
   );
 
   const peopleCalc: PersonCalc[] = withBonus.peopleCalc.map((p, i) => ({

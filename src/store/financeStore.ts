@@ -41,6 +41,12 @@ function migrateEmergencyFundTargetMonths(data: any): number {
   return typeof data?.emergencyFundTargetMonths === 'number' ? data.emergencyFundTargetMonths : 6;
 }
 
+/** Older stored shapes pre-date the Alabama state-tax option — default to '' (flat rate),
+ * matching the previous behavior exactly. */
+function migrateTaxState(data: any): string {
+  return typeof data?.taxState === 'string' ? data.taxState : '';
+}
+
 /** Older stored shapes pre-date counting investment accounts toward the emergency fund —
  * default to none included, matching the previous cash-only behavior exactly. */
 function migrateEmergencyFundIncludedInvestmentIds(data: any): number[] {
@@ -52,6 +58,8 @@ interface FinanceState {
   activeTab: TabKey;
   filingStatus: FilingStatus;
   stateTaxRate: number;
+  /** '' (default) uses the flat stateTaxRate; 'AL' uses real Alabama bracket math instead. */
+  taxState: string;
   people: Person[];
   expenses: Expense[];
   debts: Debt[];
@@ -76,6 +84,7 @@ interface FinanceState {
   setTab: (tab: TabKey) => void;
   setFilingStatus: (status: FilingStatus) => void;
   setStateTaxRate: (rate: number) => void;
+  setTaxState: (taxState: string) => void;
 
   updatePerson: <K extends keyof Person>(id: number, field: K, value: Person[K]) => void;
 
@@ -182,6 +191,7 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
   activeTab: 'overview',
   filingStatus: 'mfj',
   stateTaxRate: 5,
+  taxState: '',
   people: initialPeople,
   expenses: initialExpenses,
   debts: initialDebts,
@@ -216,6 +226,7 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
           monthlyActuals: migrateMonthlyActuals(cloud),
           emergencyFundTargetMonths: migrateEmergencyFundTargetMonths(cloud),
           emergencyFundIncludedInvestmentIds: migrateEmergencyFundIncludedInvestmentIds(cloud),
+          taxState: migrateTaxState(cloud),
           hydrated: true,
         });
         applyingRemote = false;
@@ -238,6 +249,7 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
             monthlyActuals: migrateMonthlyActuals(state),
             emergencyFundTargetMonths: migrateEmergencyFundTargetMonths(state),
             emergencyFundIncludedInvestmentIds: migrateEmergencyFundIncludedInvestmentIds(state),
+            taxState: migrateTaxState(state),
             hydrated: true,
           });
           applyingRemote = false;
@@ -269,6 +281,7 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
           monthlyActuals: migrateMonthlyActuals(cloud),
           emergencyFundTargetMonths: migrateEmergencyFundTargetMonths(cloud),
           emergencyFundIncludedInvestmentIds: migrateEmergencyFundIncludedInvestmentIds(cloud),
+          taxState: migrateTaxState(cloud),
         });
         applyingRemote = false;
       }
@@ -280,6 +293,7 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
   setTab: (tab) => set({ activeTab: tab }),
   setFilingStatus: (status) => set({ filingStatus: status }),
   setStateTaxRate: (rate) => set({ stateTaxRate: rate }),
+  setTaxState: (taxState) => set({ taxState }),
 
   updatePerson: (id, field, value) =>
     set((s) => ({ people: s.people.map((p) => (p.id === id ? { ...p, [field]: value } : p)) })),
@@ -418,6 +432,7 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
     return {
       filingStatus: s.filingStatus,
       stateTaxRate: s.stateTaxRate,
+      taxState: s.taxState,
       people: s.people,
       expenses: s.expenses,
       debts: s.debts,
@@ -444,6 +459,7 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
       monthlyActuals: migrateMonthlyActuals(data),
       emergencyFundTargetMonths: migrateEmergencyFundTargetMonths(data),
       emergencyFundIncludedInvestmentIds: migrateEmergencyFundIncludedInvestmentIds(data),
+      taxState: migrateTaxState(data),
     })),
 }));
 

@@ -23,6 +23,8 @@ export function Sidebar() {
   const setFilingStatus = useFinanceStore((s) => s.setFilingStatus);
   const stateTaxRate = useFinanceStore((s) => s.stateTaxRate);
   const setStateTaxRate = useFinanceStore((s) => s.setStateTaxRate);
+  const taxState = useFinanceStore((s) => s.taxState);
+  const setTaxState = useFinanceStore((s) => s.setTaxState);
 
   return (
     <div className="w-full md:w-[230px] md:shrink-0 bg-sidebar px-3.5 py-4 md:py-6.5 flex flex-col gap-3 md:gap-[3px] md:h-screen md:overflow-y-auto">
@@ -57,14 +59,29 @@ export function Sidebar() {
           <option value="single">Single</option>
           <option value="hoh">Head of household</option>
         </select>
-        <div className="mt-3">State tax rate (flat %)</div>
-        <input
-          type="number"
-          step={0.1}
-          value={stateTaxRate}
-          onChange={(e: ChangeEvent<HTMLInputElement>) => setStateTaxRate(parseClampedNumber(e.target.value))}
-          className="w-full mt-1.5 px-2 py-1.5 rounded-md text-[13px] font-mono bg-sidebar-input-bg border border-sidebar-input-border text-sidebar-title"
-        />
+        <div className="mt-3">State</div>
+        <select
+          value={taxState}
+          onChange={(e: ChangeEvent<HTMLSelectElement>) => setTaxState(e.target.value)}
+          className="w-full mt-1.5 px-2 py-1.5 rounded-md text-[13px] bg-sidebar-input-bg border border-sidebar-input-border text-sidebar-title"
+        >
+          <option value="">Other (flat rate)</option>
+          <option value="AL">Alabama</option>
+        </select>
+        {taxState === 'AL' ? (
+          <div className="mt-2 text-[11px] text-sidebar-muted">Using Alabama's actual tax brackets.</div>
+        ) : (
+          <>
+            <div className="mt-3">State tax rate (flat %)</div>
+            <input
+              type="number"
+              step={0.1}
+              value={stateTaxRate}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setStateTaxRate(parseClampedNumber(e.target.value))}
+              className="w-full mt-1.5 px-2 py-1.5 rounded-md text-[13px] font-mono bg-sidebar-input-bg border border-sidebar-input-border text-sidebar-title"
+            />
+          </>
+        )}
       </div>
       <BackupControls />
     </div>

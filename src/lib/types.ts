@@ -104,6 +104,8 @@ export interface MonthlyActual {
 export interface BackupData {
   filingStatus: FilingStatus;
   stateTaxRate: number;
+  /** '' (default) uses the flat stateTaxRate; 'AL' uses real Alabama bracket math instead. */
+  taxState: string;
   people: Person[];
   expenses: Expense[];
   debts: Debt[];

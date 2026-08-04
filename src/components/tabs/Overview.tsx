@@ -9,12 +9,16 @@ export function Overview() {
   const people = useFinanceStore((s) => s.people);
   const filingStatus = useFinanceStore((s) => s.filingStatus);
   const stateTaxRate = useFinanceStore((s) => s.stateTaxRate);
+  const taxState = useFinanceStore((s) => s.taxState);
   const expenses = useFinanceStore((s) => s.expenses);
   const debts = useFinanceStore((s) => s.debts);
   const investments = useFinanceStore((s) => s.investments);
   const assets = useFinanceStore((s) => s.assets);
 
-  const household = useMemo(() => computeHousehold(people, filingStatus, stateTaxRate), [people, filingStatus, stateTaxRate]);
+  const household = useMemo(
+    () => computeHousehold(people, filingStatus, stateTaxRate, taxState),
+    [people, filingStatus, stateTaxRate, taxState]
+  );
   const totalMonthlyExpenses = useMemo(() => expenses.reduce((sum, x) => sum + x.monthly, 0), [expenses]);
   const totalDebt = useMemo(() => debts.reduce((sum, d) => sum + d.balance, 0), [debts]);
   const totalInvestments = useMemo(() => investments.reduce((sum, v) => sum + v.balance, 0), [investments]);

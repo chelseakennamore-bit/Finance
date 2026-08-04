@@ -18,9 +18,13 @@ export function IncomePay() {
   const people = useFinanceStore((s) => s.people);
   const filingStatus = useFinanceStore((s) => s.filingStatus);
   const stateTaxRate = useFinanceStore((s) => s.stateTaxRate);
+  const taxState = useFinanceStore((s) => s.taxState);
   const updatePerson = useFinanceStore((s) => s.updatePerson);
 
-  const household = useMemo(() => computeHousehold(people, filingStatus, stateTaxRate), [people, filingStatus, stateTaxRate]);
+  const household = useMemo(
+    () => computeHousehold(people, filingStatus, stateTaxRate, taxState),
+    [people, filingStatus, stateTaxRate, taxState]
+  );
 
   return (
     <div className="flex flex-col gap-6">

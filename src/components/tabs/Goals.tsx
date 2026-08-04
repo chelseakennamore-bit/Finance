@@ -15,6 +15,7 @@ export function Goals() {
   const people = useFinanceStore((s) => s.people);
   const filingStatus = useFinanceStore((s) => s.filingStatus);
   const stateTaxRate = useFinanceStore((s) => s.stateTaxRate);
+  const taxState = useFinanceStore((s) => s.taxState);
   const emergencyFundTargetMonths = useFinanceStore((s) => s.emergencyFundTargetMonths);
   const setEmergencyFundTargetMonths = useFinanceStore((s) => s.setEmergencyFundTargetMonths);
   const emergencyFundIncludedInvestmentIds = useFinanceStore((s) => s.emergencyFundIncludedInvestmentIds);
@@ -32,7 +33,10 @@ export function Goals() {
   const emergencyLiquidTotal = assets.cash + emergencyFundInvestmentTotal;
   const emergencyMonths = totalMonthlyExpenses ? emergencyLiquidTotal / totalMonthlyExpenses : 0;
 
-  const household = useMemo(() => computeHousehold(people, filingStatus, stateTaxRate), [people, filingStatus, stateTaxRate]);
+  const household = useMemo(
+    () => computeHousehold(people, filingStatus, stateTaxRate, taxState),
+    [people, filingStatus, stateTaxRate, taxState]
+  );
   const monthlySurplus = household.netMonthlyHousehold - totalMonthlyExpenses;
 
   const emergencyTargetAmount = emergencyFundTargetMonths * totalMonthlyExpenses;

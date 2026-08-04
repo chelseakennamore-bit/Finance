@@ -49,6 +49,7 @@ export function BudgetExpenses() {
   const people = useFinanceStore((s) => s.people);
   const filingStatus = useFinanceStore((s) => s.filingStatus);
   const stateTaxRate = useFinanceStore((s) => s.stateTaxRate);
+  const taxState = useFinanceStore((s) => s.taxState);
   const updateExpense = useFinanceStore((s) => s.updateExpense);
   const addExpense = useFinanceStore((s) => s.addExpense);
   const removeExpense = useFinanceStore((s) => s.removeExpense);
@@ -57,7 +58,10 @@ export function BudgetExpenses() {
   const saveMonthlyActual = useFinanceStore((s) => s.saveMonthlyActual);
   const removeMonthlyActual = useFinanceStore((s) => s.removeMonthlyActual);
 
-  const household = useMemo(() => computeHousehold(people, filingStatus, stateTaxRate), [people, filingStatus, stateTaxRate]);
+  const household = useMemo(
+    () => computeHousehold(people, filingStatus, stateTaxRate, taxState),
+    [people, filingStatus, stateTaxRate, taxState]
+  );
   const totalMonthlyExpenses = useMemo(() => expenses.reduce((sum, x) => sum + x.monthly, 0), [expenses]);
   const totalAnnualExpenses = totalMonthlyExpenses * 12;
 

@@ -18,6 +18,7 @@ export function Debt() {
   const people = useFinanceStore((s) => s.people);
   const filingStatus = useFinanceStore((s) => s.filingStatus);
   const stateTaxRate = useFinanceStore((s) => s.stateTaxRate);
+  const taxState = useFinanceStore((s) => s.taxState);
   const debtStrategy = useFinanceStore((s) => s.debtStrategy);
   const debtExtraPayment = useFinanceStore((s) => s.debtExtraPayment);
   const consolidationApr = useFinanceStore((s) => s.consolidationApr);
@@ -32,7 +33,10 @@ export function Debt() {
   const removeDebt = useFinanceStore((s) => s.removeDebt);
   const setDebts = useFinanceStore((s) => s.setDebts);
 
-  const household = useMemo(() => computeHousehold(people, filingStatus, stateTaxRate), [people, filingStatus, stateTaxRate]);
+  const household = useMemo(
+    () => computeHousehold(people, filingStatus, stateTaxRate, taxState),
+    [people, filingStatus, stateTaxRate, taxState]
+  );
   const totalDebt = useMemo(() => debts.reduce((sum, d) => sum + d.balance, 0), [debts]);
   const totalMinPayments = useMemo(() => debts.reduce((sum, d) => sum + d.minPayment, 0), [debts]);
   const weightedApr = totalDebt ? debts.reduce((sum, d) => sum + d.balance * d.apr, 0) / totalDebt : 0;
