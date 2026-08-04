@@ -114,6 +114,7 @@ export interface BackupData {
   netWorthHistory: NetWorthSnapshot[];
   monthlyActuals: MonthlyActual[];
   emergencyFundTargetMonths: number;
+  emergencyFundIncludedInvestmentIds: number[];
   debtStrategy: DebtStrategy;
   debtExtraPayment: number;
   consolidationApr: number;

@@ -41,6 +41,12 @@ function migrateEmergencyFundTargetMonths(data: any): number {
   return typeof data?.emergencyFundTargetMonths === 'number' ? data.emergencyFundTargetMonths : 6;
 }
 
+/** Older stored shapes pre-date counting investment accounts toward the emergency fund —
+ * default to none included, matching the previous cash-only behavior exactly. */
+function migrateEmergencyFundIncludedInvestmentIds(data: any): number[] {
+  return Array.isArray(data?.emergencyFundIncludedInvestmentIds) ? data.emergencyFundIncludedInvestmentIds : [];
+}
+
 interface FinanceState {
   hydrated: boolean;
   activeTab: TabKey;
@@ -56,6 +62,7 @@ interface FinanceState {
   netWorthHistory: NetWorthSnapshot[];
   monthlyActuals: MonthlyActual[];
   emergencyFundTargetMonths: number;
+  emergencyFundIncludedInvestmentIds: number[];
   debtStrategy: DebtStrategy;
   debtExtraPayment: number;
   consolidationApr: number;
@@ -115,6 +122,7 @@ interface FinanceState {
   setGoalInvestmentIncluded: (goalId: number, investmentId: number, included: boolean) => void;
 
   setEmergencyFundTargetMonths: (months: number) => void;
+  setEmergencyFundInvestmentIncluded: (investmentId: number, included: boolean) => void;
 
   exportBackup: () => BackupData;
   restoreBackup: (data: BackupData) => void;
@@ -184,6 +192,7 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
   netWorthHistory: [],
   monthlyActuals: [],
   emergencyFundTargetMonths: 6,
+  emergencyFundIncludedInvestmentIds: [],
   debtStrategy: 'avalanche',
   debtExtraPayment: 200,
   consolidationApr: 9,
@@ -206,6 +215,7 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
           goals: migrateGoals(cloud),
           monthlyActuals: migrateMonthlyActuals(cloud),
           emergencyFundTargetMonths: migrateEmergencyFundTargetMonths(cloud),
+          emergencyFundIncludedInvestmentIds: migrateEmergencyFundIncludedInvestmentIds(cloud),
           hydrated: true,
         });
         applyingRemote = false;
@@ -227,6 +237,7 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
             goals: migrateGoals(state),
             monthlyActuals: migrateMonthlyActuals(state),
             emergencyFundTargetMonths: migrateEmergencyFundTargetMonths(state),
+            emergencyFundIncludedInvestmentIds: migrateEmergencyFundIncludedInvestmentIds(state),
             hydrated: true,
           });
           applyingRemote = false;
@@ -257,6 +268,7 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
           goals: migrateGoals(cloud),
           monthlyActuals: migrateMonthlyActuals(cloud),
           emergencyFundTargetMonths: migrateEmergencyFundTargetMonths(cloud),
+          emergencyFundIncludedInvestmentIds: migrateEmergencyFundIncludedInvestmentIds(cloud),
         });
         applyingRemote = false;
       }
@@ -393,6 +405,13 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
     })),
 
   setEmergencyFundTargetMonths: (months) => set({ emergencyFundTargetMonths: months }),
+  setEmergencyFundInvestmentIncluded: (investmentId, included) =>
+    set((s) => {
+      const ids = new Set(s.emergencyFundIncludedInvestmentIds);
+      if (included) ids.add(investmentId);
+      else ids.delete(investmentId);
+      return { emergencyFundIncludedInvestmentIds: Array.from(ids) };
+    }),
 
   exportBackup: () => {
     const s = get();
@@ -409,6 +428,7 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
       netWorthHistory: s.netWorthHistory,
       monthlyActuals: s.monthlyActuals,
       emergencyFundTargetMonths: s.emergencyFundTargetMonths,
+      emergencyFundIncludedInvestmentIds: s.emergencyFundIncludedInvestmentIds,
       debtStrategy: s.debtStrategy,
       debtExtraPayment: s.debtExtraPayment,
       consolidationApr: s.consolidationApr,
@@ -423,6 +443,7 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
       goals: migrateGoals(data),
       monthlyActuals: migrateMonthlyActuals(data),
       emergencyFundTargetMonths: migrateEmergencyFundTargetMonths(data),
+      emergencyFundIncludedInvestmentIds: migrateEmergencyFundIncludedInvestmentIds(data),
     })),
 }));
 
