@@ -8,6 +8,8 @@ import type {
   FilingStatus,
   Goal,
   Investment,
+  MonthlyActual,
+  MonthlyActualEntry,
   NetWorthSnapshot,
   Person,
   SavedScenario,
@@ -29,6 +31,11 @@ function migrateGoals(data: any): Goal[] {
   return [{ id: 1, label: 'Primary goal', targetAmount: 50000, assumedReturnPct: 6 }];
 }
 
+/** Older stored shapes pre-date the monthly-actuals feature entirely. */
+function migrateMonthlyActuals(data: any): MonthlyActual[] {
+  return Array.isArray(data?.monthlyActuals) ? data.monthlyActuals : [];
+}
+
 interface FinanceState {
   hydrated: boolean;
   activeTab: TabKey;
@@ -42,6 +49,7 @@ interface FinanceState {
   scenario: Scenario;
   savedScenarios: SavedScenario[];
   netWorthHistory: NetWorthSnapshot[];
+  monthlyActuals: MonthlyActual[];
   debtStrategy: DebtStrategy;
   debtExtraPayment: number;
   consolidationApr: number;
@@ -90,6 +98,10 @@ interface FinanceState {
 
   saveNetWorthSnapshot: (assets: number, liabilities: number, netWorth: number) => void;
   removeSnapshot: (id: number) => void;
+
+  /** Upserts by month — saving the same month again replaces its entries rather than duplicating. */
+  saveMonthlyActual: (month: string, entries: MonthlyActualEntry[]) => void;
+  removeMonthlyActual: (id: number) => void;
 
   addGoal: () => void;
   removeGoal: (id: number) => void;
@@ -161,6 +173,7 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
   scenario: initialScenario,
   savedScenarios: [],
   netWorthHistory: [],
+  monthlyActuals: [],
   debtStrategy: 'avalanche',
   debtExtraPayment: 200,
   consolidationApr: 9,
@@ -178,7 +191,7 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
           return;
         }
         applyingRemote = true;
-        set({ ...cloud, goals: migrateGoals(cloud), hydrated: true });
+        set({ ...cloud, goals: migrateGoals(cloud), monthlyActuals: migrateMonthlyActuals(cloud), hydrated: true });
         applyingRemote = false;
         return;
       }
@@ -193,7 +206,7 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
         const state = JSON.parse(legacy).state;
         if (state) {
           applyingRemote = true;
-          set({ ...state, goals: migrateGoals(state), hydrated: true });
+          set({ ...state, goals: migrateGoals(state), monthlyActuals: migrateMonthlyActuals(state), hydrated: true });
           applyingRemote = false;
           saveCloudData(get().exportBackup()).catch((e) => console.error('Cloud seed failed', e));
           return;
@@ -217,7 +230,7 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
           return;
         }
         applyingRemote = true;
-        set({ ...cloud, goals: migrateGoals(cloud) });
+        set({ ...cloud, goals: migrateGoals(cloud), monthlyActuals: migrateMonthlyActuals(cloud) });
         applyingRemote = false;
       }
     } catch (e) {
@@ -323,6 +336,16 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
     })),
   removeSnapshot: (id) => set((s) => ({ netWorthHistory: s.netWorthHistory.filter((h) => h.id !== id) })),
 
+  saveMonthlyActual: (month, entries) =>
+    set((s) => {
+      const existing = s.monthlyActuals.find((m) => m.month === month);
+      if (existing) {
+        return { monthlyActuals: s.monthlyActuals.map((m) => (m.month === month ? { ...m, entries } : m)) };
+      }
+      return { monthlyActuals: [...s.monthlyActuals, { id: s.nextId, month, entries }], nextId: s.nextId + 1 };
+    }),
+  removeMonthlyActual: (id) => set((s) => ({ monthlyActuals: s.monthlyActuals.filter((m) => m.id !== id) })),
+
   addGoal: () =>
     set((s) => ({
       goals: [...s.goals, { id: s.nextId, label: 'New goal', targetAmount: 10000, assumedReturnPct: 6 }],
@@ -345,6 +368,7 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
       scenario: s.scenario,
       savedScenarios: s.savedScenarios,
       netWorthHistory: s.netWorthHistory,
+      monthlyActuals: s.monthlyActuals,
       debtStrategy: s.debtStrategy,
       debtExtraPayment: s.debtExtraPayment,
       consolidationApr: s.consolidationApr,
@@ -353,7 +377,7 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
       nextId: s.nextId,
     };
   },
-  restoreBackup: (data) => set(() => ({ ...data, goals: migrateGoals(data) })),
+  restoreBackup: (data) => set(() => ({ ...data, goals: migrateGoals(data), monthlyActuals: migrateMonthlyActuals(data) })),
 }));
 
 let saveTimer: ReturnType<typeof setTimeout> | null = null;

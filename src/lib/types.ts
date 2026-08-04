@@ -86,6 +86,18 @@ export interface Goal {
   assumedReturnPct: number;
 }
 
+export interface MonthlyActualEntry {
+  category: string;
+  amount: number;
+}
+
+export interface MonthlyActual {
+  id: number;
+  /** YYYY-MM */
+  month: string;
+  entries: MonthlyActualEntry[];
+}
+
 export interface BackupData {
   filingStatus: FilingStatus;
   stateTaxRate: number;
@@ -97,6 +109,7 @@ export interface BackupData {
   scenario: Scenario;
   savedScenarios: SavedScenario[];
   netWorthHistory: NetWorthSnapshot[];
+  monthlyActuals: MonthlyActual[];
   debtStrategy: DebtStrategy;
   debtExtraPayment: number;
   consolidationApr: number;
