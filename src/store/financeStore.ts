@@ -33,6 +33,8 @@ interface FinanceState {
   netWorthHistory: NetWorthSnapshot[];
   debtStrategy: DebtStrategy;
   debtExtraPayment: number;
+  consolidationApr: number;
+  consolidationTermMonths: number;
   goal: Goal;
   nextId: number;
 
@@ -56,6 +58,8 @@ interface FinanceState {
   setDebts: (rows: Debt[]) => void;
   setDebtStrategy: (strategy: DebtStrategy) => void;
   setDebtExtraPayment: (amount: number) => void;
+  setConsolidationApr: (apr: number) => void;
+  setConsolidationTermMonths: (months: number) => void;
 
   updateInvestment: <K extends keyof Investment>(id: number, field: K, value: Investment[K]) => void;
   addInvestment: () => void;
@@ -97,10 +101,10 @@ const initialExpenses: Expense[] = [
 ];
 
 const initialDebts: Debt[] = [
-  { id: 1, name: 'Mortgage', balance: 385000, apr: 6.25, minPayment: 2400 },
-  { id: 2, name: 'Car Loan', balance: 18500, apr: 5.9, minPayment: 365 },
-  { id: 3, name: 'Student Loan', balance: 22000, apr: 4.5, minPayment: 230 },
-  { id: 4, name: 'Credit Card', balance: 3200, apr: 22.9, minPayment: 120 },
+  { id: 1, name: 'Mortgage', balance: 385000, apr: 6.25, minPayment: 2400, includeInPayoff: true },
+  { id: 2, name: 'Car Loan', balance: 18500, apr: 5.9, minPayment: 365, includeInPayoff: true },
+  { id: 3, name: 'Student Loan', balance: 22000, apr: 4.5, minPayment: 230, includeInPayoff: true },
+  { id: 4, name: 'Credit Card', balance: 3200, apr: 22.9, minPayment: 120, includeInPayoff: true },
 ];
 
 const initialInvestments: Investment[] = [
@@ -144,6 +148,8 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
   netWorthHistory: [],
   debtStrategy: 'avalanche',
   debtExtraPayment: 200,
+  consolidationApr: 9,
+  consolidationTermMonths: 60,
   goal: { targetAmount: 50000, assumedReturnPct: 6 },
   nextId: 100,
 
@@ -216,13 +222,15 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
     set((s) => ({ debts: s.debts.map((d) => (d.id === id ? { ...d, [field]: value } : d)) })),
   addDebt: () =>
     set((s) => ({
-      debts: [...s.debts, { id: s.nextId, name: 'New Debt', balance: 0, apr: 0, minPayment: 0 }],
+      debts: [...s.debts, { id: s.nextId, name: 'New Debt', balance: 0, apr: 0, minPayment: 0, includeInPayoff: true }],
       nextId: s.nextId + 1,
     })),
   removeDebt: (id) => set((s) => ({ debts: s.debts.filter((d) => d.id !== id) })),
   setDebts: (rows) => set((s) => ({ debts: rows, nextId: s.nextId + rows.length })),
   setDebtStrategy: (strategy) => set({ debtStrategy: strategy }),
   setDebtExtraPayment: (amount) => set({ debtExtraPayment: amount }),
+  setConsolidationApr: (apr) => set({ consolidationApr: apr }),
+  setConsolidationTermMonths: (months) => set({ consolidationTermMonths: months }),
 
   updateInvestment: (id, field, value) =>
     set((s) => ({ investments: s.investments.map((v) => (v.id === id ? { ...v, [field]: value } : v)) })),
@@ -303,6 +311,8 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
       netWorthHistory: s.netWorthHistory,
       debtStrategy: s.debtStrategy,
       debtExtraPayment: s.debtExtraPayment,
+      consolidationApr: s.consolidationApr,
+      consolidationTermMonths: s.consolidationTermMonths,
       goal: s.goal,
       nextId: s.nextId,
     };

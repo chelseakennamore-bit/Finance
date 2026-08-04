@@ -32,6 +32,10 @@ export interface Debt {
   balance: number;
   apr: number;
   minPayment: number;
+  /** Whether this debt is worked by the avalanche/snowball payoff planner. Undefined means true. */
+  includeInPayoff?: boolean;
+  /** Whether this debt is rolled into the hypothetical consolidation loan. Undefined means false. */
+  includeInConsolidation?: boolean;
 }
 
 export interface Investment {
@@ -93,6 +97,8 @@ export interface BackupData {
   netWorthHistory: NetWorthSnapshot[];
   debtStrategy: DebtStrategy;
   debtExtraPayment: number;
+  consolidationApr: number;
+  consolidationTermMonths: number;
   goal: Goal;
   nextId: number;
 }
