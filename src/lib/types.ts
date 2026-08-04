@@ -110,6 +110,7 @@ export interface BackupData {
   savedScenarios: SavedScenario[];
   netWorthHistory: NetWorthSnapshot[];
   monthlyActuals: MonthlyActual[];
+  emergencyFundTargetMonths: number;
   debtStrategy: DebtStrategy;
   debtExtraPayment: number;
   consolidationApr: number;

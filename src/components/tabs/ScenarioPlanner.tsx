@@ -216,6 +216,10 @@ export function ScenarioPlanner() {
       <div className="rounded-[10px] px-6 py-5 text-[15px] font-semibold" style={{ background: 'oklch(24% 0.02 50)', color: 'oklch(94% 0.012 75)' }}>
         {scenVerdict}
       </div>
+      <p className="text-xs text-subtle m-0">
+        Bonus is treated as a once-a-year payment: Annual figures include it, but Monthly, Biweekly, and cash-flow
+        figures reflect recurring salary only.
+      </p>
 
       {savedScenarios.length > 0 && (
         <Card className="px-4 py-2">

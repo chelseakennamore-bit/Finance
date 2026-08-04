@@ -36,6 +36,11 @@ function migrateMonthlyActuals(data: any): MonthlyActual[] {
   return Array.isArray(data?.monthlyActuals) ? data.monthlyActuals : [];
 }
 
+/** Older stored shapes pre-date the editable emergency fund target. */
+function migrateEmergencyFundTargetMonths(data: any): number {
+  return typeof data?.emergencyFundTargetMonths === 'number' ? data.emergencyFundTargetMonths : 6;
+}
+
 interface FinanceState {
   hydrated: boolean;
   activeTab: TabKey;
@@ -50,6 +55,7 @@ interface FinanceState {
   savedScenarios: SavedScenario[];
   netWorthHistory: NetWorthSnapshot[];
   monthlyActuals: MonthlyActual[];
+  emergencyFundTargetMonths: number;
   debtStrategy: DebtStrategy;
   debtExtraPayment: number;
   consolidationApr: number;
@@ -106,6 +112,8 @@ interface FinanceState {
   addGoal: () => void;
   removeGoal: (id: number) => void;
   updateGoal: <K extends keyof Goal>(id: number, field: K, value: Goal[K]) => void;
+
+  setEmergencyFundTargetMonths: (months: number) => void;
 
   exportBackup: () => BackupData;
   restoreBackup: (data: BackupData) => void;
@@ -174,6 +182,7 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
   savedScenarios: [],
   netWorthHistory: [],
   monthlyActuals: [],
+  emergencyFundTargetMonths: 6,
   debtStrategy: 'avalanche',
   debtExtraPayment: 200,
   consolidationApr: 9,
@@ -191,7 +200,13 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
           return;
         }
         applyingRemote = true;
-        set({ ...cloud, goals: migrateGoals(cloud), monthlyActuals: migrateMonthlyActuals(cloud), hydrated: true });
+        set({
+          ...cloud,
+          goals: migrateGoals(cloud),
+          monthlyActuals: migrateMonthlyActuals(cloud),
+          emergencyFundTargetMonths: migrateEmergencyFundTargetMonths(cloud),
+          hydrated: true,
+        });
         applyingRemote = false;
         return;
       }
@@ -206,7 +221,13 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
         const state = JSON.parse(legacy).state;
         if (state) {
           applyingRemote = true;
-          set({ ...state, goals: migrateGoals(state), monthlyActuals: migrateMonthlyActuals(state), hydrated: true });
+          set({
+            ...state,
+            goals: migrateGoals(state),
+            monthlyActuals: migrateMonthlyActuals(state),
+            emergencyFundTargetMonths: migrateEmergencyFundTargetMonths(state),
+            hydrated: true,
+          });
           applyingRemote = false;
           saveCloudData(get().exportBackup()).catch((e) => console.error('Cloud seed failed', e));
           return;
@@ -230,7 +251,12 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
           return;
         }
         applyingRemote = true;
-        set({ ...cloud, goals: migrateGoals(cloud), monthlyActuals: migrateMonthlyActuals(cloud) });
+        set({
+          ...cloud,
+          goals: migrateGoals(cloud),
+          monthlyActuals: migrateMonthlyActuals(cloud),
+          emergencyFundTargetMonths: migrateEmergencyFundTargetMonths(cloud),
+        });
         applyingRemote = false;
       }
     } catch (e) {
@@ -355,6 +381,8 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
   updateGoal: (id, field, value) =>
     set((s) => ({ goals: s.goals.map((g) => (g.id === id ? { ...g, [field]: value } : g)) })),
 
+  setEmergencyFundTargetMonths: (months) => set({ emergencyFundTargetMonths: months }),
+
   exportBackup: () => {
     const s = get();
     return {
@@ -369,6 +397,7 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
       savedScenarios: s.savedScenarios,
       netWorthHistory: s.netWorthHistory,
       monthlyActuals: s.monthlyActuals,
+      emergencyFundTargetMonths: s.emergencyFundTargetMonths,
       debtStrategy: s.debtStrategy,
       debtExtraPayment: s.debtExtraPayment,
       consolidationApr: s.consolidationApr,
@@ -377,7 +406,13 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
       nextId: s.nextId,
     };
   },
-  restoreBackup: (data) => set(() => ({ ...data, goals: migrateGoals(data), monthlyActuals: migrateMonthlyActuals(data) })),
+  restoreBackup: (data) =>
+    set(() => ({
+      ...data,
+      goals: migrateGoals(data),
+      monthlyActuals: migrateMonthlyActuals(data),
+      emergencyFundTargetMonths: migrateEmergencyFundTargetMonths(data),
+    })),
 }));
 
 let saveTimer: ReturnType<typeof setTimeout> | null = null;

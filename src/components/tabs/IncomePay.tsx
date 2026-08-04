@@ -91,10 +91,10 @@ export function IncomePay() {
             </thead>
             <tbody>
               <tr>
-                <td className="py-1.5 px-2.5 text-sm border-b border-rowborder">Gross pay (incl. bonus)</td>
+                <td className="py-1.5 px-2.5 text-sm border-b border-rowborder">Gross pay (annual incl. bonus)</td>
                 <td className="py-1.5 px-2.5 text-sm text-right font-mono border-b border-rowborder">{fmt(p.grossWithBonus)}</td>
-                <td className="py-1.5 px-2.5 text-sm text-right font-mono border-b border-rowborder">{fmt(p.grossWithBonus / 12)}</td>
-                <td className="py-1.5 px-2.5 text-sm text-right font-mono border-b border-rowborder">{fmt(p.grossWithBonus / 26)}</td>
+                <td className="py-1.5 px-2.5 text-sm text-right font-mono border-b border-rowborder">{fmt(p.salary / 12)}</td>
+                <td className="py-1.5 px-2.5 text-sm text-right font-mono border-b border-rowborder">{fmt(p.salary / 26)}</td>
               </tr>
               <tr>
                 <td className="py-1.5 px-2.5 text-sm text-muted border-b border-rowborder">– 401(k) contribution</td>
@@ -129,8 +129,8 @@ export function IncomePay() {
               <tr>
                 <td className="py-1.5 px-2.5 text-sm font-bold">Net take-home</td>
                 <td className="py-1.5 px-2.5 text-sm text-right font-mono font-bold">{fmt(p.netAnnual)}</td>
-                <td className="py-1.5 px-2.5 text-sm text-right font-mono font-bold">{fmt(p.netAnnual / 12)}</td>
-                <td className="py-1.5 px-2.5 text-sm text-right font-mono font-bold">{fmt(p.netAnnual / 26)}</td>
+                <td className="py-1.5 px-2.5 text-sm text-right font-mono font-bold">{fmt(p.netAnnualRecurring / 12)}</td>
+                <td className="py-1.5 px-2.5 text-sm text-right font-mono font-bold">{fmt(p.netAnnualRecurring / 26)}</td>
               </tr>
             </tbody>
           </table>
@@ -147,7 +147,9 @@ export function IncomePay() {
       </div>
       <p className="text-xs text-subtle m-0">
         Federal + flat state tax are computed once on combined household income and allocated to each partner
-        proportionally to their gross pay — actual paycheck withholding will differ.
+        proportionally to their gross pay — actual paycheck withholding will differ. Bonus is treated as a
+        once-a-year payment: Annual figures include it, but Monthly and Biweekly figures reflect recurring
+        salary only, so a bonus doesn't inflate your ongoing take-home pay.
       </p>
     </div>
   );

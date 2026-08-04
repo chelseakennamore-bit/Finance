@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import type { ChangeEvent } from 'react';
 import { useFinanceStore } from '../../store/financeStore';
-import { projectGoal } from '../../lib/derive';
+import { computeHousehold, projectGoal } from '../../lib/derive';
 import { fmt } from '../../lib/format';
 import { parseClampedNumber } from '../../lib/validate';
 import { Card } from '../ui/Card';
@@ -12,6 +12,11 @@ export function Goals() {
   const assets = useFinanceStore((s) => s.assets);
   const expenses = useFinanceStore((s) => s.expenses);
   const investments = useFinanceStore((s) => s.investments);
+  const people = useFinanceStore((s) => s.people);
+  const filingStatus = useFinanceStore((s) => s.filingStatus);
+  const stateTaxRate = useFinanceStore((s) => s.stateTaxRate);
+  const emergencyFundTargetMonths = useFinanceStore((s) => s.emergencyFundTargetMonths);
+  const setEmergencyFundTargetMonths = useFinanceStore((s) => s.setEmergencyFundTargetMonths);
   const goals = useFinanceStore((s) => s.goals);
   const addGoal = useFinanceStore((s) => s.addGoal);
   const removeGoal = useFinanceStore((s) => s.removeGoal);
@@ -19,6 +24,24 @@ export function Goals() {
 
   const totalMonthlyExpenses = useMemo(() => expenses.reduce((sum, x) => sum + x.monthly, 0), [expenses]);
   const emergencyMonths = totalMonthlyExpenses ? assets.cash / totalMonthlyExpenses : 0;
+
+  const household = useMemo(() => computeHousehold(people, filingStatus, stateTaxRate), [people, filingStatus, stateTaxRate]);
+  const monthlySurplus = household.netMonthlyHousehold - totalMonthlyExpenses;
+
+  const emergencyTargetAmount = emergencyFundTargetMonths * totalMonthlyExpenses;
+  const emergencyMet = assets.cash >= emergencyTargetAmount;
+  const emergencyProgressPct = emergencyTargetAmount > 0 ? Math.min(100, (assets.cash / emergencyTargetAmount) * 100) : 100;
+  const emergencyShortfall = Math.max(0, emergencyTargetAmount - assets.cash);
+
+  let emergencyTimeFmt: string;
+  if (emergencyMet) {
+    emergencyTimeFmt = 'Goal met';
+  } else if (monthlySurplus <= 0) {
+    emergencyTimeFmt = 'Not on pace';
+  } else {
+    const monthsToTarget = Math.ceil(emergencyShortfall / monthlySurplus);
+    emergencyTimeFmt = monthsToTarget > 600 ? '600+ mo' : `${Math.floor(monthsToTarget / 12)}y ${monthsToTarget % 12}m`;
+  }
 
   const totalInvestments = useMemo(() => investments.reduce((sum, v) => sum + v.balance, 0), [investments]);
   const totalMonthlyContribution = useMemo(() => investments.reduce((sum, v) => sum + v.contribution, 0), [investments]);
@@ -31,11 +54,53 @@ export function Goals() {
       </div>
 
       <Card className="p-6">
-        <div className="text-[13px] font-semibold mb-3">Emergency fund</div>
-        <div className="flex gap-6 items-baseline flex-wrap">
+        <div className="flex justify-between items-center mb-3 flex-wrap gap-3">
+          <div className="text-[13px] font-semibold">Emergency fund</div>
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-muted">Target</label>
+            <input
+              type="number"
+              step={0.5}
+              value={emergencyFundTargetMonths}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setEmergencyFundTargetMonths(parseClampedNumber(e.target.value))}
+              className="w-[70px] text-right border border-inputborder rounded-md px-2 py-1.5 text-sm font-mono"
+            />
+            <span className="text-[13px] text-muted">months of expenses</span>
+          </div>
+        </div>
+
+        <div className="flex gap-6 items-baseline flex-wrap mb-4">
           <div className="text-[28px] font-bold font-mono">{emergencyMonths.toFixed(1)} months</div>
           <div className="text-[13px] text-muted">
             of expenses covered by {fmt(assets.cash)} in cash, at {fmt(totalMonthlyExpenses)}/mo spend
+          </div>
+        </div>
+
+        <div className="flex w-full h-3.5 rounded-full overflow-hidden mb-2" style={{ background: 'oklch(92% 0.008 70)' }}>
+          <div
+            className="h-3.5"
+            style={{ width: `${emergencyProgressPct}%`, background: emergencyMet ? 'oklch(56% 0.09 145)' : 'oklch(58% 0.1 40)' }}
+          />
+        </div>
+        <div className="flex justify-between text-xs font-mono text-muted mb-4">
+          <div>{fmt(assets.cash)} saved</div>
+          <div>Target: {fmt(emergencyTargetAmount)}</div>
+        </div>
+
+        <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
+          <div>
+            <div className="text-xs uppercase text-muted">Progress</div>
+            <div className="text-xl font-bold font-mono mt-1">{emergencyProgressPct.toFixed(0)}%</div>
+          </div>
+          <div>
+            <div className="text-xs uppercase text-muted">{emergencyMet ? 'Above target' : 'Still needed'}</div>
+            <div className="text-xl font-bold font-mono mt-1">
+              {fmt(emergencyMet ? assets.cash - emergencyTargetAmount : emergencyShortfall)}
+            </div>
+          </div>
+          <div>
+            <div className="text-xs uppercase text-muted">Time to target</div>
+            <div className="text-xl font-bold font-mono mt-1">{emergencyTimeFmt}</div>
           </div>
         </div>
       </Card>
