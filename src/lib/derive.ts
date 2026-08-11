@@ -2,6 +2,13 @@ import type { FilingStatus, Person, Scenario } from './types';
 import { STD_DED, marginalTax, baseFica, addlMedicare } from './taxCalc';
 import { computeAlabamaTax, type AlTaxResult } from './stateTax';
 
+/** Resolves a person's annual bonus to a dollar amount, whether it's entered as a flat
+ * dollar figure or as a percentage of salary. */
+export function effectiveBonus(p: Person): number {
+  if (p.bonusMode === 'percent') return (p.salary * (p.bonusPct || 0)) / 100;
+  return p.bonus || 0;
+}
+
 export interface PersonCalc extends Person {
   grossWithBonus: number;
   contribution401kAnnual: number;
@@ -55,10 +62,10 @@ interface HouseholdCore {
 /** `taxState === 'AL'` switches state tax from the flat `stateTaxRate` to real Alabama bracket
  * math (see stateTax.ts); any other value (including '' / undefined) keeps the flat rate. */
 function computeHouseholdCore(people: Person[], filingStatus: FilingStatus, stateTaxRate: number, taxState?: string): HouseholdCore {
-  const totalGrossAnnual = people.reduce((sum, p) => sum + p.salary + (p.bonus || 0), 0);
+  const totalGrossAnnual = people.reduce((sum, p) => sum + p.salary + effectiveBonus(p), 0);
 
   const base = people.map((p) => {
-    const grossWithBonus = p.salary + (p.bonus || 0);
+    const grossWithBonus = p.salary + effectiveBonus(p);
     const contribution401kAnnual = (grossWithBonus * (p.contribution401kPct || 0)) / 100;
     const insuranceAnnual = (p.insuranceMonthly || 0) * 12;
     const fedWages = Math.max(0, grossWithBonus - contribution401kAnnual - insuranceAnnual);
@@ -119,7 +126,7 @@ export function computeHousehold(
 ): HouseholdCalc {
   const withBonus = computeHouseholdCore(people, filingStatus, stateTaxRate, taxState);
   const recurring = computeHouseholdCore(
-    people.map((p) => ({ ...p, bonus: 0 })),
+    people.map((p) => ({ ...p, bonus: 0, bonusPct: 0 })),
     filingStatus,
     stateTaxRate,
     taxState

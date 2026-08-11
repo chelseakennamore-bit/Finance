@@ -1,10 +1,11 @@
 import { useMemo } from 'react';
 import type { ChangeEvent, FocusEvent } from 'react';
 import { useFinanceStore } from '../../store/financeStore';
-import { computeHousehold } from '../../lib/derive';
+import { computeHousehold, effectiveBonus } from '../../lib/derive';
 import { fmt } from '../../lib/format';
 import { parseClampedNumber } from '../../lib/validate';
 import { Card } from '../ui/Card';
+import type { BonusMode } from '../../lib/types';
 
 function Th({ children, right = false }: { children?: React.ReactNode; right?: boolean }) {
   return (
@@ -56,12 +57,33 @@ export function IncomePay() {
             </div>
             <div className="flex items-center gap-2.5">
               <label className="text-[13px] text-muted">Annual bonus</label>
-              <input
-                type="number"
-                value={p.bonus}
-                onChange={(e: ChangeEvent<HTMLInputElement>) => updatePerson(p.id, 'bonus', parseClampedNumber(e.target.value))}
-                className="w-[100px] border border-inputborder rounded-md px-2 py-1.5 text-sm font-mono"
-              />
+              <select
+                value={p.bonusMode || 'flat'}
+                onChange={(e: ChangeEvent<HTMLSelectElement>) => updatePerson(p.id, 'bonusMode', e.target.value as BonusMode)}
+                className="border border-inputborder rounded-md px-1.5 py-1.5 text-sm"
+              >
+                <option value="flat">$</option>
+                <option value="percent">%</option>
+              </select>
+              {(p.bonusMode || 'flat') === 'percent' ? (
+                <>
+                  <input
+                    type="number"
+                    step={0.5}
+                    value={p.bonusPct || 0}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => updatePerson(p.id, 'bonusPct', parseClampedNumber(e.target.value))}
+                    className="w-[70px] border border-inputborder rounded-md px-2 py-1.5 text-sm font-mono"
+                  />
+                  <span className="text-xs text-muted font-mono">= {fmt(effectiveBonus(p))}</span>
+                </>
+              ) : (
+                <input
+                  type="number"
+                  value={p.bonus}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => updatePerson(p.id, 'bonus', parseClampedNumber(e.target.value))}
+                  className="w-[100px] border border-inputborder rounded-md px-2 py-1.5 text-sm font-mono"
+                />
+              )}
             </div>
             <div className="flex items-center gap-2.5">
               <label className="text-[13px] text-muted">401(k) % of salary</label>

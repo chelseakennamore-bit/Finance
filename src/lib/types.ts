@@ -11,11 +11,17 @@ export type TabKey =
   | 'scenario'
   | 'goals';
 
+export type BonusMode = 'flat' | 'percent';
+
 export interface Person {
   id: number;
   name: string;
   salary: number;
+  /** Dollar bonus amount, used when bonusMode is 'flat' (or unset). */
   bonus: number;
+  /** Bonus as a % of salary, used when bonusMode is 'percent'. Undefined means 'flat'. */
+  bonusMode?: BonusMode;
+  bonusPct?: number;
   contribution401kPct: number;
   insuranceMonthly: number;
 }
