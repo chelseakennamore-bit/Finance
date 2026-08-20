@@ -58,3 +58,25 @@ export async function renameHousehold(householdName: string): Promise<{ ok: bool
   if (!res.ok) return { ok: false, error: data.error || 'Rename failed.' };
   return { ok: true };
 }
+
+export async function changePassword(currentPassword: string, newPassword: string): Promise<{ ok: boolean; error?: string }> {
+  const res = await fetch('/api/auth/change-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+  const data = await parseJson(res);
+  if (!res.ok) return { ok: false, error: data.error || 'Could not change password.' };
+  return { ok: true };
+}
+
+export async function changeSlug(newSlug: string): Promise<{ ok: boolean; error?: string; slug?: string }> {
+  const res = await fetch('/api/auth/change-slug', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ newSlug }),
+  });
+  const data = await parseJson(res);
+  if (!res.ok) return { ok: false, error: data.error || 'Could not change household ID.' };
+  return { ok: true, slug: data.slug };
+}

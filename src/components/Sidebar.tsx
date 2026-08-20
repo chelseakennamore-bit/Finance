@@ -5,6 +5,7 @@ import type { FilingStatus, TabKey } from '../lib/types';
 import { parseClampedNumber } from '../lib/validate';
 import { logout, renameHousehold } from '../lib/auth';
 import { BackupControls } from './BackupControls';
+import { AccountSettings } from './AccountSettings';
 
 const NAV_ITEMS: { key: TabKey; label: string }[] = [
   { key: 'overview', label: 'Overview' },
@@ -127,6 +128,7 @@ export function Sidebar() {
         )}
       </div>
       <BackupControls />
+      <AccountSettings />
       <div className="pt-3.5 px-3 text-[11px] text-sidebar-muted border-t border-sidebar-border">
         <button
           onClick={handleLogout}

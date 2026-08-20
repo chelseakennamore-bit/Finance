@@ -19,17 +19,19 @@ function slugify(name: string): string {
 export function AuthGate({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<Status>('checking');
   const setHouseholdName = useFinanceStore((s) => s.setHouseholdName);
+  const setHouseholdSlug = useFinanceStore((s) => s.setHouseholdSlug);
 
   useEffect(() => {
     checkSession().then((session) => {
       if (session.authenticated) {
         setHouseholdName(session.householdName || '');
+        setHouseholdSlug(session.slug || '');
         setStatus('authenticated');
       } else {
         setStatus('unauthenticated');
       }
     });
-  }, [setHouseholdName]);
+  }, [setHouseholdName, setHouseholdSlug]);
 
   if (status === 'checking') {
     return (
@@ -42,8 +44,9 @@ export function AuthGate({ children }: { children: ReactNode }) {
   if (status === 'unauthenticated') {
     return (
       <LoginSignupScreen
-        onAuthenticated={(householdName) => {
+        onAuthenticated={(householdName, slug) => {
           setHouseholdName(householdName);
+          setHouseholdSlug(slug);
           setStatus('authenticated');
         }}
       />
@@ -53,7 +56,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
-function LoginSignupScreen({ onAuthenticated }: { onAuthenticated: (householdName: string) => void }) {
+function LoginSignupScreen({ onAuthenticated }: { onAuthenticated: (householdName: string, slug: string) => void }) {
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [slug, setSlug] = useState('');
   const [slugTouched, setSlugTouched] = useState(false);
@@ -101,7 +104,7 @@ function LoginSignupScreen({ onAuthenticated }: { onAuthenticated: (householdNam
       setError(result.error || 'Something went wrong.');
       return;
     }
-    onAuthenticated(mode === 'login' ? result.householdName || slug : householdName.trim());
+    onAuthenticated(mode === 'login' ? result.householdName || slug : householdName.trim(), slug);
   };
 
   return (
