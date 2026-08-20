@@ -18,6 +18,10 @@ export default async function handler(req: any, res: any) {
     res.status(400).json({ error: 'Household ID must be 3-32 lowercase letters, numbers, or hyphens.' });
     return;
   }
+  if (slug === 'default') {
+    res.status(400).json({ error: '"default" is reserved. Pick a different household ID.' });
+    return;
+  }
   if (typeof householdName !== 'string' || !householdName.trim() || householdName.trim().length > 60) {
     res.status(400).json({ error: 'Household name is required (60 characters max).' });
     return;

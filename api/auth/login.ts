@@ -43,19 +43,29 @@ export default async function handler(req: any, res: any) {
   // One-time bootstrap: the original single-household deployment used a flat SITE_PASSWORD
   // env var with no household ID at all. Let `default` log in with that password once, which
   // migrates it into the new per-household auth/data records so it behaves normally afterward.
-  if (!record && slug === 'default' && process.env.SITE_PASSWORD && password === process.env.SITE_PASSWORD) {
-    const { hash, salt } = hashPassword(password);
-    record = {
-      passwordHash: hash,
-      passwordSalt: salt,
-      householdName: 'Household Finance',
-      createdAt: new Date().toISOString(),
-    };
-    await redis.set('household-finance:auth:default', record);
-    const legacyData = await redis.get(LEGACY_DATA_KEY);
-    const alreadyMigrated = await redis.get('household-finance:data:default');
-    if (legacyData && !alreadyMigrated) {
-      await redis.set('household-finance:data:default', legacyData);
+  if (!record && slug === 'default') {
+    if (!process.env.SITE_PASSWORD) {
+      // Distinguishable from a real wrong-password case, without revealing anything sensitive:
+      // this deployment simply doesn't have the env var the bootstrap depends on.
+      res.status(401).json({
+        error: 'SITE_PASSWORD is not set on this deployment — add it in Vercel → Settings → Environment Variables (scoped to Production) and redeploy, then try again.',
+      });
+      return;
+    }
+    if (password === process.env.SITE_PASSWORD) {
+      const { hash, salt } = hashPassword(password);
+      record = {
+        passwordHash: hash,
+        passwordSalt: salt,
+        householdName: 'Household Finance',
+        createdAt: new Date().toISOString(),
+      };
+      await redis.set('household-finance:auth:default', record);
+      const legacyData = await redis.get(LEGACY_DATA_KEY);
+      const alreadyMigrated = await redis.get('household-finance:data:default');
+      if (legacyData && !alreadyMigrated) {
+        await redis.set('household-finance:data:default', legacyData);
+      }
     }
   }
 
