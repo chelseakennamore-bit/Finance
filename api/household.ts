@@ -1,11 +1,18 @@
 import { Redis } from '@upstash/redis';
+import { resolveSession } from './_lib/session';
 
 const redis = Redis.fromEnv();
-const KEY = 'household-finance:data';
 
 export default async function handler(req: any, res: any) {
+  const session = await resolveSession(req);
+  if (!session) {
+    res.status(401).json({ error: 'Not authenticated' });
+    return;
+  }
+  const key = `household-finance:data:${session.slug}`;
+
   if (req.method === 'GET') {
-    const data = await redis.get(KEY);
+    const data = await redis.get(key);
     res.status(200).json({ data: data ?? null });
     return;
   }
@@ -20,7 +27,7 @@ export default async function handler(req: any, res: any) {
       res.status(413).json({ error: 'Payload too large' });
       return;
     }
-    await redis.set(KEY, body);
+    await redis.set(key, body);
     res.status(200).json({ ok: true });
     return;
   }

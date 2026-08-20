@@ -1,7 +1,9 @@
-import type { ChangeEvent } from 'react';
+import { useEffect, useState } from 'react';
+import type { ChangeEvent, FocusEvent } from 'react';
 import { useFinanceStore } from '../store/financeStore';
 import type { FilingStatus, TabKey } from '../lib/types';
 import { parseClampedNumber } from '../lib/validate';
+import { logout, renameHousehold } from '../lib/auth';
 import { BackupControls } from './BackupControls';
 
 const NAV_ITEMS: { key: TabKey; label: string }[] = [
@@ -16,6 +18,41 @@ const NAV_ITEMS: { key: TabKey; label: string }[] = [
   { key: 'goals', label: 'Goals' },
 ];
 
+function HouseholdLabel() {
+  const householdName = useFinanceStore((s) => s.householdName);
+  const setHouseholdName = useFinanceStore((s) => s.setHouseholdName);
+  const [draft, setDraft] = useState(householdName);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => setDraft(householdName), [householdName]);
+
+  const commit = async (e: FocusEvent<HTMLInputElement>) => {
+    const trimmed = e.target.value.trim();
+    if (!trimmed || trimmed === householdName) {
+      setDraft(householdName);
+      return;
+    }
+    setSaving(true);
+    const result = await renameHousehold(trimmed);
+    setSaving(false);
+    if (result.ok) {
+      setHouseholdName(trimmed);
+    } else {
+      setDraft(householdName);
+    }
+  };
+
+  return (
+    <input
+      value={draft}
+      onChange={(e: ChangeEvent<HTMLInputElement>) => setDraft(e.target.value)}
+      onBlur={commit}
+      disabled={saving}
+      className="text-xs text-sidebar-muted bg-transparent border-none w-full focus:outline-none px-3 -mt-1 pb-4 md:pb-[18px]"
+    />
+  );
+}
+
 export function Sidebar() {
   const activeTab = useFinanceStore((s) => s.activeTab);
   const setTab = useFinanceStore((s) => s.setTab);
@@ -26,9 +63,15 @@ export function Sidebar() {
   const taxState = useFinanceStore((s) => s.taxState);
   const setTaxState = useFinanceStore((s) => s.setTaxState);
 
+  const handleLogout = async () => {
+    await logout();
+    window.location.reload();
+  };
+
   return (
     <div className="w-full md:w-[230px] md:shrink-0 bg-sidebar px-3.5 py-4 md:py-6.5 flex flex-col gap-3 md:gap-[3px] md:h-screen md:overflow-y-auto">
-      <div className="text-[15px] font-bold text-sidebar-title px-3 md:pb-[22px] tracking-wide">Household Finance</div>
+      <div className="text-[15px] font-bold text-sidebar-title px-3 tracking-wide">Household Finance</div>
+      <HouseholdLabel />
       <div className="flex flex-row md:flex-col gap-1 md:gap-[3px] overflow-x-auto md:overflow-visible">
         {NAV_ITEMS.map((item) => {
           const isActive = item.key === activeTab;
@@ -84,6 +127,14 @@ export function Sidebar() {
         )}
       </div>
       <BackupControls />
+      <div className="pt-3.5 px-3 text-[11px] text-sidebar-muted border-t border-sidebar-border">
+        <button
+          onClick={handleLogout}
+          className="w-full px-2 py-1.5 rounded-md text-[12px] bg-sidebar-input-bg border border-sidebar-input-border text-sidebar-title cursor-pointer"
+        >
+          Log out
+        </button>
+      </div>
     </div>
   );
 }

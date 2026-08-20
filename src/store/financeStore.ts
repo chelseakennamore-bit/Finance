@@ -55,6 +55,9 @@ function migrateEmergencyFundIncludedInvestmentIds(data: any): number[] {
 
 interface FinanceState {
   hydrated: boolean;
+  /** Session-only display info from the auth gate — not part of BackupData/exportBackup,
+   * so it's never synced to the cloud blob or included in JSON backups. */
+  householdName: string;
   activeTab: TabKey;
   filingStatus: FilingStatus;
   stateTaxRate: number;
@@ -85,6 +88,7 @@ interface FinanceState {
   refetchFromCloud: () => Promise<void>;
 
   setTab: (tab: TabKey) => void;
+  setHouseholdName: (name: string) => void;
   setFilingStatus: (status: FilingStatus) => void;
   setStateTaxRate: (rate: number) => void;
   setTaxState: (taxState: string) => void;
@@ -192,6 +196,7 @@ let applyingRemote = false;
 
 export const useFinanceStore = create<FinanceState>()((set, get) => ({
   hydrated: false,
+  householdName: '',
   activeTab: 'overview',
   filingStatus: 'mfj',
   stateTaxRate: 5,
@@ -295,6 +300,7 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
   },
 
   setTab: (tab) => set({ activeTab: tab }),
+  setHouseholdName: (name) => set({ householdName: name }),
   setFilingStatus: (status) => set({ filingStatus: status }),
   setStateTaxRate: (rate) => set({ stateTaxRate: rate }),
   setTaxState: (taxState) => set({ taxState }),
