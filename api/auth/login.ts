@@ -1,6 +1,6 @@
 import { Redis } from '@upstash/redis';
-import { hashPassword, verifyPassword } from '../_lib/hash';
-import { createSession, setSessionCookie } from '../_lib/session';
+import { hashPassword, verifyPassword } from '../_lib/hash.js';
+import { createSession, setSessionCookie } from '../_lib/session.js';
 
 const redis = Redis.fromEnv();
 const LEGACY_DATA_KEY = 'household-finance:data';

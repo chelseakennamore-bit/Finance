@@ -1,5 +1,5 @@
 import { Redis } from '@upstash/redis';
-import { resolveSession } from './_lib/session';
+import { resolveSession } from './_lib/session.js';
 
 const redis = Redis.fromEnv();
 

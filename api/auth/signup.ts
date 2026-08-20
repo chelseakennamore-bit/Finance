@@ -1,7 +1,7 @@
 import { Redis } from '@upstash/redis';
-import { hashPassword } from '../_lib/hash';
-import { createSession, setSessionCookie } from '../_lib/session';
-import { blankHouseholdData } from '../_lib/blankHousehold';
+import { hashPassword } from '../_lib/hash.js';
+import { createSession, setSessionCookie } from '../_lib/session.js';
+import { blankHouseholdData } from '../_lib/blankHousehold.js';
 
 const redis = Redis.fromEnv();
 const SLUG_RE = /^[a-z0-9-]{3,32}$/;
