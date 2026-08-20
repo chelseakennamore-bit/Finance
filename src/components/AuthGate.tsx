@@ -166,10 +166,18 @@ function LoginSignupScreen({ onAuthenticated }: { onAuthenticated: (householdNam
         </form>
         <button
           onClick={switchMode}
-          className="text-xs text-accent underline mt-4 cursor-pointer bg-transparent border-none p-0"
+          className="text-xs text-accent underline mt-4 cursor-pointer bg-transparent border-none p-0 block"
         >
           {mode === 'login' ? "Don't have a household yet? Sign up" : 'Already have a household? Log in'}
         </button>
+        <a
+          href="/user-guide.pdf"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs text-muted underline mt-2.5 inline-block"
+        >
+          New here? Read the user guide
+        </a>
       </Card>
     </div>
   );

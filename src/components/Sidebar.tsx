@@ -127,6 +127,16 @@ export function Sidebar() {
           </>
         )}
       </div>
+      <div className="mt-5 pt-3.5 px-3 text-[11px] text-sidebar-muted border-t border-sidebar-border">
+        <a
+          href="/user-guide.pdf"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block px-2 py-1.5 rounded-md text-[12px] bg-sidebar-input-bg border border-sidebar-input-border text-sidebar-title text-center"
+        >
+          User guide
+        </a>
+      </div>
       <BackupControls />
       <AccountSettings />
       <div className="pt-3.5 px-3 text-[11px] text-sidebar-muted border-t border-sidebar-border">
