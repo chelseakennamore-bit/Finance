@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
 import { useFinanceStore } from '../store/financeStore';
-import { changePassword, changeSlug } from '../lib/auth';
+import { changePassword, changeSlug, claimAdmin } from '../lib/auth';
 
 function slugify(name: string): string {
   return name
@@ -130,8 +130,56 @@ function ChangePasswordForm() {
   );
 }
 
+function ClaimAdminForm() {
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setError('');
+    if (!password) {
+      setError('Enter the site password.');
+      return;
+    }
+    setSubmitting(true);
+    const result = await claimAdmin(password);
+    setSubmitting(false);
+    if (!result.ok) {
+      setError(result.error || 'Something went wrong.');
+      return;
+    }
+    window.location.reload();
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-2 mt-4">
+      <div className="text-[11px] text-sidebar-muted">
+        Claim admin access (one-time, using the original site password) to approve new signups and manage who can
+        join.
+      </div>
+      <input
+        type="password"
+        value={password}
+        onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+        placeholder="Site password"
+        className="w-full px-2 py-1.5 rounded-md text-[13px] bg-sidebar-input-bg border border-sidebar-input-border text-sidebar-title"
+      />
+      {error && <div className="text-[11px]" style={{ color: 'oklch(70% 0.16 25)' }}>{error}</div>}
+      <button
+        type="submit"
+        disabled={submitting}
+        className="px-2 py-1.5 rounded-md text-[12px] bg-sidebar-input-bg border border-sidebar-input-border text-sidebar-title cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {submitting ? 'Claiming…' : 'Claim admin access'}
+      </button>
+    </form>
+  );
+}
+
 export function AccountSettings() {
   const [open, setOpen] = useState(false);
+  const isAdmin = useFinanceStore((s) => s.isAdmin);
 
   return (
     <div className="pt-3.5 px-3 text-[11px] text-sidebar-muted border-t border-sidebar-border">
@@ -146,6 +194,7 @@ export function AccountSettings() {
         <>
           <ChangeSlugForm />
           <ChangePasswordForm />
+          {!isAdmin && <ClaimAdminForm />}
         </>
       )}
     </div>

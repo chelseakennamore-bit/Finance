@@ -15,10 +15,11 @@ export default async function handler(req: any, res: any) {
     return;
   }
 
-  const record = await redis.get<{ householdName: string }>(`household-finance:auth:${session.slug}`);
+  const record = await redis.get<{ householdName: string; isAdmin?: boolean }>(`household-finance:auth:${session.slug}`);
   res.status(200).json({
     authenticated: true,
     slug: session.slug,
     householdName: record?.householdName || session.slug,
+    isAdmin: record?.isAdmin === true,
   });
 }

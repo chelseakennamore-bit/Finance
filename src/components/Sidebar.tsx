@@ -6,6 +6,7 @@ import { parseClampedNumber } from '../lib/validate';
 import { logout, renameHousehold } from '../lib/auth';
 import { BackupControls } from './BackupControls';
 import { AccountSettings } from './AccountSettings';
+import { AdminPanel } from './AdminPanel';
 
 const NAV_ITEMS: { key: TabKey; label: string }[] = [
   { key: 'overview', label: 'Overview' },
@@ -63,6 +64,7 @@ export function Sidebar() {
   const setStateTaxRate = useFinanceStore((s) => s.setStateTaxRate);
   const taxState = useFinanceStore((s) => s.taxState);
   const setTaxState = useFinanceStore((s) => s.setTaxState);
+  const isAdmin = useFinanceStore((s) => s.isAdmin);
 
   const handleLogout = async () => {
     await logout();
@@ -139,6 +141,7 @@ export function Sidebar() {
       </div>
       <BackupControls />
       <AccountSettings />
+      {isAdmin && <AdminPanel />}
       <div className="pt-3.5 px-3 text-[11px] text-sidebar-muted border-t border-sidebar-border">
         <button
           onClick={handleLogout}

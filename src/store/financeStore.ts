@@ -59,6 +59,7 @@ interface FinanceState {
    * so it's never synced to the cloud blob or included in JSON backups. */
   householdName: string;
   householdSlug: string;
+  isAdmin: boolean;
   activeTab: TabKey;
   filingStatus: FilingStatus;
   stateTaxRate: number;
@@ -91,6 +92,7 @@ interface FinanceState {
   setTab: (tab: TabKey) => void;
   setHouseholdName: (name: string) => void;
   setHouseholdSlug: (slug: string) => void;
+  setIsAdmin: (isAdmin: boolean) => void;
   setFilingStatus: (status: FilingStatus) => void;
   setStateTaxRate: (rate: number) => void;
   setTaxState: (taxState: string) => void;
@@ -200,6 +202,7 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
   hydrated: false,
   householdName: '',
   householdSlug: '',
+  isAdmin: false,
   activeTab: 'overview',
   filingStatus: 'mfj',
   stateTaxRate: 5,
@@ -305,6 +308,7 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
   setTab: (tab) => set({ activeTab: tab }),
   setHouseholdName: (name) => set({ householdName: name }),
   setHouseholdSlug: (slug) => set({ householdSlug: slug }),
+  setIsAdmin: (isAdmin) => set({ isAdmin }),
   setFilingStatus: (status) => set({ filingStatus: status }),
   setStateTaxRate: (rate) => set({ stateTaxRate: rate }),
   setTaxState: (taxState) => set({ taxState }),

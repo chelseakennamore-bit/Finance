@@ -1,16 +1,10 @@
 import { Redis } from '@upstash/redis';
 import { hashPassword, verifyPassword } from '../_lib/hash.js';
 import { createSession, setSessionCookie } from '../_lib/session.js';
+import type { AuthRecord } from '../_lib/admin.js';
 
 const redis = Redis.fromEnv();
 const LEGACY_DATA_KEY = 'household-finance:data';
-
-interface AuthRecord {
-  passwordHash: string;
-  passwordSalt: string;
-  householdName: string;
-  createdAt: string;
-}
 
 /** Simple per-household lockout: 10 attempts per 15 minutes. */
 async function withinRateLimit(slug: string): Promise<boolean> {
@@ -59,6 +53,7 @@ export default async function handler(req: any, res: any) {
         passwordSalt: salt,
         householdName: 'Household Finance',
         createdAt: new Date().toISOString(),
+        approved: true,
       };
       await redis.set('household-finance:auth:default', record);
       const legacyData = await redis.get(LEGACY_DATA_KEY);
@@ -74,7 +69,14 @@ export default async function handler(req: any, res: any) {
     return;
   }
 
+  // Explicit false means a pending signup awaiting approval. Accounts with no `approved` field
+  // at all predate the approval system and are grandfathered in as already-approved.
+  if (record.approved === false) {
+    res.status(403).json({ error: "Your household is awaiting approval. You'll be able to log in once approved." });
+    return;
+  }
+
   const token = await createSession(slug);
   setSessionCookie(res, token);
-  res.status(200).json({ ok: true, householdName: record.householdName });
+  res.status(200).json({ ok: true, householdName: record.householdName, isAdmin: record.isAdmin === true });
 }

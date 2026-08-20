@@ -1,7 +1,6 @@
 import { Redis } from '@upstash/redis';
 import { hashPassword } from '../_lib/hash.js';
-import { createSession, setSessionCookie } from '../_lib/session.js';
-import { blankHouseholdData } from '../_lib/blankHousehold.js';
+import { PENDING_KEY, SIGNUPS_OPEN_KEY } from '../_lib/admin.js';
 
 const redis = Redis.fromEnv();
 const SLUG_RE = /^[a-z0-9-]{3,32}$/;
@@ -9,6 +8,12 @@ const SLUG_RE = /^[a-z0-9-]{3,32}$/;
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
+    return;
+  }
+
+  const signupsOpen = await redis.get<boolean>(SIGNUPS_OPEN_KEY);
+  if (signupsOpen === false) {
+    res.status(403).json({ error: 'Signups are currently closed.' });
     return;
   }
 
@@ -44,10 +49,12 @@ export default async function handler(req: any, res: any) {
     passwordSalt: salt,
     householdName: householdName.trim(),
     createdAt: new Date().toISOString(),
+    approved: false,
+    isAdmin: false,
   });
-  await redis.set(`household-finance:data:${slug}`, blankHouseholdData());
+  await redis.sadd(PENDING_KEY, slug);
 
-  const token = await createSession(slug);
-  setSessionCookie(res, token);
-  res.status(200).json({ ok: true, householdName: householdName.trim() });
+  // No session is issued here — the account can't be used until an admin approves it.
+  // Data is seeded on approval instead, so a rejected signup leaves nothing behind.
+  res.status(200).json({ ok: true, pending: true, householdName: householdName.trim() });
 }
