@@ -1,7 +1,7 @@
 import { Redis } from '@upstash/redis';
 import { hashPassword, verifyPassword } from '../_lib/hash.js';
 import { createSession, setSessionCookie } from '../_lib/session.js';
-import type { AuthRecord } from '../_lib/admin.js';
+import { KNOWN_HOUSEHOLDS_KEY, type AuthRecord } from '../_lib/admin.js';
 
 const redis = Redis.fromEnv();
 const LEGACY_DATA_KEY = 'household-finance:data';
@@ -75,6 +75,10 @@ export default async function handler(req: any, res: any) {
     res.status(403).json({ error: "Your household is awaiting approval. You'll be able to log in once approved." });
     return;
   }
+
+  // Opportunistic backfill: this set didn't exist before the admin "manage households" view was
+  // added, so pre-existing accounts get tracked the next time they successfully log in.
+  await redis.sadd(KNOWN_HOUSEHOLDS_KEY, slug);
 
   const token = await createSession(slug);
   setSessionCookie(res, token);

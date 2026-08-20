@@ -1,6 +1,8 @@
 import { Redis } from '@upstash/redis';
-import { requireAdmin, PENDING_KEY, SIGNUPS_OPEN_KEY, type AuthRecord } from '../_lib/admin.js';
+import { randomBytes } from 'crypto';
+import { requireAdmin, PENDING_KEY, SIGNUPS_OPEN_KEY, KNOWN_HOUSEHOLDS_KEY, type AuthRecord } from '../_lib/admin.js';
 import { blankHouseholdData } from '../_lib/blankHousehold.js';
+import { hashPassword } from '../_lib/hash.js';
 
 const redis = Redis.fromEnv();
 
@@ -33,6 +35,27 @@ export default async function handler(req: any, res: any) {
     }
     entries.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
     res.status(200).json({ pending: entries });
+    return;
+  }
+
+  if (req.method === 'GET' && req.query?.action === 'households') {
+    const admin = await requireAdmin(req);
+    if (!admin) {
+      res.status(403).json({ error: 'Not authorized' });
+      return;
+    }
+    const slugs = await redis.smembers(KNOWN_HOUSEHOLDS_KEY);
+    const entries: { slug: string; householdName: string; isAdmin: boolean }[] = [];
+    for (const slug of slugs) {
+      const record = await redis.get<AuthRecord>(`household-finance:auth:${slug}`);
+      if (record && record.approved !== false) {
+        entries.push({ slug, householdName: record.householdName, isAdmin: record.isAdmin === true });
+      } else if (!record) {
+        await redis.srem(KNOWN_HOUSEHOLDS_KEY, slug);
+      }
+    }
+    entries.sort((a, b) => a.householdName.localeCompare(b.householdName));
+    res.status(200).json({ households: entries });
     return;
   }
 
@@ -89,6 +112,35 @@ export default async function handler(req: any, res: any) {
       await redis.del(`household-finance:auth:${slug}`);
       await redis.srem(PENDING_KEY, slug);
       res.status(200).json({ ok: true });
+      return;
+    }
+
+    if (action === 'revoke') {
+      if (slug === admin.slug) {
+        res.status(400).json({ error: "You can't revoke your own access." });
+        return;
+      }
+      await redis.del(`household-finance:auth:${slug}`);
+      await redis.del(`household-finance:data:${slug}`);
+      await redis.srem(PENDING_KEY, slug);
+      await redis.srem(KNOWN_HOUSEHOLDS_KEY, slug);
+      res.status(200).json({ ok: true });
+      return;
+    }
+
+    if (action === 'reset-password') {
+      // Allowed on the admin's own household too, so a locked-out admin can reset themselves
+      // while still logged in elsewhere (e.g. a saved session on another device).
+      const authKey = `household-finance:auth:${slug}`;
+      const record = await redis.get<AuthRecord>(authKey);
+      if (!record) {
+        res.status(404).json({ error: 'Household not found.' });
+        return;
+      }
+      const newPassword = randomBytes(9).toString('base64url');
+      const { hash, salt } = hashPassword(newPassword);
+      await redis.set(authKey, { ...record, passwordHash: hash, passwordSalt: salt });
+      res.status(200).json({ ok: true, newPassword });
       return;
     }
 

@@ -1,6 +1,6 @@
 import { Redis } from '@upstash/redis';
 import { hashPassword } from '../_lib/hash.js';
-import { PENDING_KEY, SIGNUPS_OPEN_KEY } from '../_lib/admin.js';
+import { PENDING_KEY, SIGNUPS_OPEN_KEY, KNOWN_HOUSEHOLDS_KEY } from '../_lib/admin.js';
 import { sendSignupNotification } from '../_lib/notify.js';
 
 const redis = Redis.fromEnv();
@@ -54,6 +54,7 @@ export default async function handler(req: any, res: any) {
     isAdmin: false,
   });
   await redis.sadd(PENDING_KEY, slug);
+  await redis.sadd(KNOWN_HOUSEHOLDS_KEY, slug);
   await sendSignupNotification(householdName.trim(), slug);
 
   // No session is issued here — the account can't be used until an admin approves it.

@@ -11,6 +11,12 @@ export interface PendingHousehold {
   createdAt: string;
 }
 
+export interface ApprovedHousehold {
+  slug: string;
+  householdName: string;
+  isAdmin: boolean;
+}
+
 async function parseJson(res: Response): Promise<any> {
   return res.json().catch(() => ({}));
 }
@@ -140,4 +146,23 @@ export async function rejectHousehold(slug: string): Promise<{ ok: boolean; erro
   const { ok, data } = await postAdminAction({ action: 'reject', slug });
   if (!ok) return { ok: false, error: data.error || 'Could not reject household.' };
   return { ok: true };
+}
+
+export async function listHouseholds(): Promise<ApprovedHousehold[]> {
+  const res = await fetch('/api/auth/admin?action=households');
+  if (!res.ok) return [];
+  const data = await parseJson(res);
+  return Array.isArray(data.households) ? data.households : [];
+}
+
+export async function revokeHousehold(slug: string): Promise<{ ok: boolean; error?: string }> {
+  const { ok, data } = await postAdminAction({ action: 'revoke', slug });
+  if (!ok) return { ok: false, error: data.error || 'Could not revoke access.' };
+  return { ok: true };
+}
+
+export async function resetPassword(slug: string): Promise<{ ok: boolean; error?: string; newPassword?: string }> {
+  const { ok, data } = await postAdminAction({ action: 'reset-password', slug });
+  if (!ok) return { ok: false, error: data.error || 'Could not reset password.' };
+  return { ok: true, newPassword: data.newPassword };
 }

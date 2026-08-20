@@ -6,6 +6,9 @@ const redis = Redis.fromEnv();
 export const ADMINS_KEY = 'household-finance:admins';
 export const PENDING_KEY = 'household-finance:pending-signups';
 export const SIGNUPS_OPEN_KEY = 'household-finance:settings:signups-open';
+/** Every slug ever created or successfully logged into — backfilled opportunistically on
+ * login, so accounts that predate this tracking still show up soon after their next sign-in. */
+export const KNOWN_HOUSEHOLDS_KEY = 'household-finance:known-households';
 
 export interface AuthRecord {
   passwordHash: string;

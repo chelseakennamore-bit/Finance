@@ -1,7 +1,7 @@
 import { Redis } from '@upstash/redis';
 import { hashPassword, verifyPassword } from '../_lib/hash.js';
 import { resolveSession, destroySession, createSession, setSessionCookie } from '../_lib/session.js';
-import { ADMINS_KEY, type AuthRecord } from '../_lib/admin.js';
+import { ADMINS_KEY, KNOWN_HOUSEHOLDS_KEY, type AuthRecord } from '../_lib/admin.js';
 
 const redis = Redis.fromEnv();
 const SLUG_RE = /^[a-z0-9-]{3,32}$/;
@@ -100,6 +100,8 @@ export default async function handler(req: any, res: any) {
     if (data) await redis.set(newDataKey, data);
     await redis.del(oldAuthKey);
     await redis.del(oldDataKey);
+    await redis.sadd(KNOWN_HOUSEHOLDS_KEY, newSlug);
+    await redis.srem(KNOWN_HOUSEHOLDS_KEY, session.slug);
 
     await destroySession(req);
     const token = await createSession(newSlug);
