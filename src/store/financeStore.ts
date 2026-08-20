@@ -75,6 +75,9 @@ interface FinanceState {
   debtExtraPayment: number;
   consolidationApr: number;
   consolidationTermMonths: number;
+  /** Manual override for the consolidation loan's monthly payment. Undefined means use the
+   * calculated amortized payment. */
+  consolidationMonthlyPaymentOverride?: number;
   goals: Goal[];
   nextId: number;
 
@@ -104,6 +107,7 @@ interface FinanceState {
   setDebtConsolidation: (id: number, included: boolean) => void;
   setConsolidationApr: (apr: number) => void;
   setConsolidationTermMonths: (months: number) => void;
+  setConsolidationMonthlyPaymentOverride: (amount: number | undefined) => void;
 
   updateInvestment: <K extends keyof Investment>(id: number, field: K, value: Investment[K]) => void;
   addInvestment: () => void;
@@ -327,6 +331,7 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
     })),
   setConsolidationApr: (apr) => set({ consolidationApr: apr }),
   setConsolidationTermMonths: (months) => set({ consolidationTermMonths: months }),
+  setConsolidationMonthlyPaymentOverride: (amount) => set({ consolidationMonthlyPaymentOverride: amount }),
 
   updateInvestment: (id, field, value) =>
     set((s) => ({ investments: s.investments.map((v) => (v.id === id ? { ...v, [field]: value } : v)) })),
@@ -448,6 +453,7 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
       debtExtraPayment: s.debtExtraPayment,
       consolidationApr: s.consolidationApr,
       consolidationTermMonths: s.consolidationTermMonths,
+      consolidationMonthlyPaymentOverride: s.consolidationMonthlyPaymentOverride,
       goals: s.goals,
       nextId: s.nextId,
     };

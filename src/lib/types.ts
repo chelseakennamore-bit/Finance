@@ -127,6 +127,9 @@ export interface BackupData {
   debtExtraPayment: number;
   consolidationApr: number;
   consolidationTermMonths: number;
+  /** Manual override for the consolidation loan's monthly payment (e.g. an actual lender
+   * quote). Undefined means use the calculated amortized payment. */
+  consolidationMonthlyPaymentOverride?: number;
   goals: Goal[];
   nextId: number;
 }

@@ -23,11 +23,13 @@ export function Debt() {
   const debtExtraPayment = useFinanceStore((s) => s.debtExtraPayment);
   const consolidationApr = useFinanceStore((s) => s.consolidationApr);
   const consolidationTermMonths = useFinanceStore((s) => s.consolidationTermMonths);
+  const consolidationMonthlyPaymentOverride = useFinanceStore((s) => s.consolidationMonthlyPaymentOverride);
   const setDebtStrategy = useFinanceStore((s) => s.setDebtStrategy);
   const setDebtExtraPayment = useFinanceStore((s) => s.setDebtExtraPayment);
   const setDebtConsolidation = useFinanceStore((s) => s.setDebtConsolidation);
   const setConsolidationApr = useFinanceStore((s) => s.setConsolidationApr);
   const setConsolidationTermMonths = useFinanceStore((s) => s.setConsolidationTermMonths);
+  const setConsolidationMonthlyPaymentOverride = useFinanceStore((s) => s.setConsolidationMonthlyPaymentOverride);
   const updateDebt = useFinanceStore((s) => s.updateDebt);
   const addDebt = useFinanceStore((s) => s.addDebt);
   const removeDebt = useFinanceStore((s) => s.removeDebt);
@@ -53,7 +55,27 @@ export function Debt() {
     () => computeConsolidation(consolidationDebts, consolidationApr, consolidationTermMonths),
     [consolidationDebts, consolidationApr, consolidationTermMonths]
   );
-  const monthlyPaymentChange = consolidation.newMonthlyPayment - consolidation.currentMinPayments;
+  // An edited payment (e.g. an actual lender quote) overrides the calculated amortized one.
+  const effectiveMonthlyPayment = consolidationMonthlyPaymentOverride ?? consolidation.newMonthlyPayment;
+  const monthlyPaymentChange = effectiveMonthlyPayment - consolidation.currentMinPayments;
+
+  // Re-simulate the loan alone at whichever payment is in effect, rather than trusting the
+  // closed-form term-based total — an edited payment may pay the loan off faster or slower
+  // than the original term, which changes total interest.
+  const consolidationLoanPayoff = useMemo(() => {
+    if (consolidation.totalBalance <= 0 || effectiveMonthlyPayment <= 0) {
+      return { months: 0, totalInterest: 0, order: [] };
+    }
+    const syntheticLoan = {
+      id: -1,
+      name: 'Consolidated loan',
+      balance: consolidation.totalBalance,
+      apr: consolidationApr,
+      minPayment: effectiveMonthlyPayment,
+    };
+    return simulatePayoff([syntheticLoan], 'avalanche', 0);
+  }, [consolidation.totalBalance, consolidationApr, effectiveMonthlyPayment]);
+  const paymentTooLowToAmortize = consolidationLoanPayoff.months >= 600;
 
   // "Without consolidating": restore consolidated debts to individual payoff, same as if the
   // consolidation checkboxes had never been touched.
@@ -75,10 +97,10 @@ export function Debt() {
       name: 'Consolidated loan',
       balance: consolidation.totalBalance,
       apr: consolidationApr,
-      minPayment: consolidation.newMonthlyPayment,
+      minPayment: effectiveMonthlyPayment,
     };
     return simulatePayoff([...payoffDebts, syntheticLoan], debtStrategy, debtExtraPayment);
-  }, [payoffDebts, consolidationDebts.length, consolidation, consolidationApr, debtStrategy, debtExtraPayment, payoff]);
+  }, [payoffDebts, consolidationDebts.length, consolidation, consolidationApr, effectiveMonthlyPayment, debtStrategy, debtExtraPayment, payoff]);
 
   const interestSaved = withoutConsolidatingPayoff.totalInterest - withConsolidationPayoff.totalInterest;
 
@@ -337,11 +359,31 @@ export function Debt() {
               </div>
               <div>
                 <div className="text-xs uppercase text-muted">New monthly payment</div>
-                <div className="text-xl font-bold font-mono mt-1">{fmt(consolidation.newMonthlyPayment)}</div>
+                <input
+                  type="number"
+                  value={effectiveMonthlyPayment}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                    setConsolidationMonthlyPaymentOverride(parseClampedNumber(e.target.value))
+                  }
+                  className="text-xl font-bold font-mono mt-1 w-full border border-inputborder rounded-md px-2 py-1"
+                />
+                {consolidationMonthlyPaymentOverride != null && (
+                  <button
+                    onClick={() => setConsolidationMonthlyPaymentOverride(undefined)}
+                    className="text-xs text-accent mt-1 underline cursor-pointer bg-transparent border-none p-0"
+                  >
+                    Reset to calculated ({fmt(consolidation.newMonthlyPayment)})
+                  </button>
+                )}
               </div>
               <div>
                 <div className="text-xs uppercase text-muted">New total interest</div>
-                <div className="text-xl font-bold font-mono mt-1">{fmt(consolidation.newTotalInterest)}</div>
+                <div className="text-xl font-bold font-mono mt-1">{fmt(consolidationLoanPayoff.totalInterest)}</div>
+                {paymentTooLowToAmortize && (
+                  <div className="text-xs mt-1" style={{ color: 'oklch(50% 0.16 25)' }}>
+                    This payment may be too low to pay off the loan
+                  </div>
+                )}
               </div>
               <div>
                 <div className="text-xs uppercase text-muted">Monthly payment change</div>
