@@ -1,4 +1,4 @@
-import type { FilingStatus, Person, Scenario } from './types';
+import type { BonusMode, FilingStatus, Person, Scenario } from './types';
 import { STD_DED, marginalTax, baseFica, addlMedicare } from './taxCalc';
 import { computeAlabamaTax, type AlTaxResult } from './stateTax';
 
@@ -7,6 +7,12 @@ import { computeAlabamaTax, type AlTaxResult } from './stateTax';
 export function effectiveBonus(p: Person): number {
   if (p.bonusMode === 'percent') return (p.salary * (p.bonusPct || 0)) / 100;
   return p.bonus || 0;
+}
+
+/** Same resolution as effectiveBonus, for the Scenario Planner's per-partner salary/bonus fields. */
+export function effectiveScenarioBonus(salary: number, bonus: number, bonusMode?: BonusMode, bonusPct?: number): number {
+  if (bonusMode === 'percent') return (salary * (bonusPct || 0)) / 100;
+  return bonus || 0;
 }
 
 export interface PersonCalc extends Person {
@@ -175,13 +181,15 @@ interface ScenarioCore {
 }
 
 function computeScenarioCore(sc: Scenario): ScenarioCore {
-  const grossTotal = sc.salaryA + sc.salaryB + (sc.bonusA || 0) + (sc.bonusB || 0);
+  const bonusA = effectiveScenarioBonus(sc.salaryA, sc.bonusA, sc.bonusModeA, sc.bonusPctA);
+  const bonusB = effectiveScenarioBonus(sc.salaryB, sc.bonusB, sc.bonusModeB, sc.bonusPctB);
+  const grossTotal = sc.salaryA + sc.salaryB + bonusA + bonusB;
   const insuranceAnnualEach = ((sc.insuranceMonthly || 0) * 12) / 2;
   const pct = sc.pretax401kPct || 0;
-  const c401kA = ((sc.salaryA + (sc.bonusA || 0)) * pct) / 100;
-  const c401kB = ((sc.salaryB + (sc.bonusB || 0)) * pct) / 100;
-  const ficaWagesA = Math.max(0, sc.salaryA + (sc.bonusA || 0) - insuranceAnnualEach);
-  const ficaWagesB = Math.max(0, sc.salaryB + (sc.bonusB || 0) - insuranceAnnualEach);
+  const c401kA = ((sc.salaryA + bonusA) * pct) / 100;
+  const c401kB = ((sc.salaryB + bonusB) * pct) / 100;
+  const ficaWagesA = Math.max(0, sc.salaryA + bonusA - insuranceAnnualEach);
+  const ficaWagesB = Math.max(0, sc.salaryB + bonusB - insuranceAnnualEach);
   const fedWagesTotal = Math.max(0, grossTotal - c401kA - c401kB - insuranceAnnualEach * 2);
   const stdDed = STD_DED[sc.filingStatus] || STD_DED.mfj;
   const taxable = Math.max(0, fedWagesTotal - stdDed);
@@ -203,7 +211,9 @@ function computeScenarioCore(sc: Scenario): ScenarioCore {
  * current expenses" view) in place of the scenario's mortgage + other-expenses lump sums. */
 export function computeScenario(sc: Scenario, expensesMonthlyOverride?: number): ScenarioCalc {
   const withBonus = computeScenarioCore(sc);
-  const recurring = computeScenarioCore({ ...sc, bonusA: 0, bonusB: 0 });
+  // Zero the bonus mode too, not just the flat fields — a percent-mode bonus would otherwise
+  // still resolve to a nonzero amount here.
+  const recurring = computeScenarioCore({ ...sc, bonusA: 0, bonusB: 0, bonusModeA: 'flat', bonusModeB: 'flat' });
   const expensesMonthly = expensesMonthlyOverride ?? (sc.mortgage || 0) + (sc.otherExpenses || 0);
   const expensesAnnual = expensesMonthly * 12;
   const netMonthly = recurring.netAnnual / 12;

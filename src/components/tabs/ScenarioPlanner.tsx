@@ -1,26 +1,66 @@
 import { useMemo, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import { useFinanceStore } from '../../store/financeStore';
-import { computeScenario } from '../../lib/derive';
+import { computeScenario, effectiveScenarioBonus } from '../../lib/derive';
 import { fmt, fmtSigned } from '../../lib/format';
 import { parseClampedNumber } from '../../lib/validate';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { RemoveButton, TextCell } from '../ui/EditableCell';
-import type { Scenario } from '../../lib/types';
+import type { BonusMode, Scenario } from '../../lib/types';
 
 type View = 'simple' | 'itemized';
 
-function NumberField({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
+function BonusField({
+  salary,
+  flat,
+  mode,
+  pct,
+  onModeChange,
+  onFlatChange,
+  onPctChange,
+}: {
+  salary: number;
+  flat: number;
+  mode?: BonusMode;
+  pct?: number;
+  onModeChange: (mode: BonusMode) => void;
+  onFlatChange: (v: number) => void;
+  onPctChange: (v: number) => void;
+}) {
+  const isPercent = (mode || 'flat') === 'percent';
   return (
     <div className="flex justify-between items-center mt-2.5">
-      <span className="text-xs text-muted">{label}</span>
-      <input
-        type="number"
-        value={value}
-        onChange={(e: ChangeEvent<HTMLInputElement>) => onChange(parseClampedNumber(e.target.value))}
-        className="w-[120px] text-right border border-inputborder rounded-md px-2 py-1.5 text-sm font-mono"
-      />
+      <span className="text-xs text-muted">Annual bonus</span>
+      <div className="flex items-center gap-1.5">
+        <select
+          value={mode || 'flat'}
+          onChange={(e: ChangeEvent<HTMLSelectElement>) => onModeChange(e.target.value as BonusMode)}
+          className="border border-inputborder rounded-md px-1.5 py-1.5 text-sm"
+        >
+          <option value="flat">$</option>
+          <option value="percent">%</option>
+        </select>
+        {isPercent ? (
+          <>
+            <input
+              type="number"
+              step={0.5}
+              value={pct || 0}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => onPctChange(parseClampedNumber(e.target.value))}
+              className="w-[70px] text-right border border-inputborder rounded-md px-2 py-1.5 text-sm font-mono"
+            />
+            <span className="text-xs text-muted font-mono">= {fmt(effectiveScenarioBonus(salary, flat, mode, pct))}</span>
+          </>
+        ) : (
+          <input
+            type="number"
+            value={flat}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => onFlatChange(parseClampedNumber(e.target.value))}
+            className="w-[120px] text-right border border-inputborder rounded-md px-2 py-1.5 text-sm font-mono"
+          />
+        )}
+      </div>
     </div>
   );
 }
@@ -135,7 +175,17 @@ export function ScenarioPlanner() {
           step={1000}
           unitLabel="Annual"
           onChange={(v) => set('salaryA', v)}
-          extra={<NumberField label="Annual bonus" value={scenario.bonusA} onChange={(v) => set('bonusA', v)} />}
+          extra={
+            <BonusField
+              salary={scenario.salaryA}
+              flat={scenario.bonusA}
+              mode={scenario.bonusModeA}
+              pct={scenario.bonusPctA}
+              onModeChange={(v) => set('bonusModeA', v)}
+              onFlatChange={(v) => set('bonusA', v)}
+              onPctChange={(v) => set('bonusPctA', v)}
+            />
+          }
         />
         <SliderField
           label="Partner B salary"
@@ -145,7 +195,17 @@ export function ScenarioPlanner() {
           step={1000}
           unitLabel="Annual"
           onChange={(v) => set('salaryB', v)}
-          extra={<NumberField label="Annual bonus" value={scenario.bonusB} onChange={(v) => set('bonusB', v)} />}
+          extra={
+            <BonusField
+              salary={scenario.salaryB}
+              flat={scenario.bonusB}
+              mode={scenario.bonusModeB}
+              pct={scenario.bonusPctB}
+              onModeChange={(v) => set('bonusModeB', v)}
+              onFlatChange={(v) => set('bonusB', v)}
+              onPctChange={(v) => set('bonusPctB', v)}
+            />
+          }
         />
         {view === 'simple' ? (
           <>

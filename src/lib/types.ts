@@ -62,8 +62,14 @@ export interface Assets {
 export interface Scenario {
   salaryA: number;
   salaryB: number;
+  /** Dollar bonus amount, used when bonusModeA is 'flat' (or unset). */
   bonusA: number;
+  bonusModeA?: BonusMode;
+  bonusPctA?: number;
+  /** Dollar bonus amount, used when bonusModeB is 'flat' (or unset). */
   bonusB: number;
+  bonusModeB?: BonusMode;
+  bonusPctB?: number;
   mortgage: number;
   otherExpenses: number;
   filingStatus: FilingStatus;
