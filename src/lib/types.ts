@@ -70,6 +70,9 @@ export interface Scenario {
   pretax401kPct: number;
   insuranceMonthly: number;
   stateTaxRate: number;
+  /** What-if overrides for the "against current expenses" view, keyed by Expense.id. A missing
+   * entry means that category uses its real current monthly amount. */
+  expenseOverrides?: Record<number, number>;
 }
 
 export interface SavedScenario extends Scenario {

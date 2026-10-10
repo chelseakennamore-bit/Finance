@@ -125,8 +125,10 @@ interface FinanceState {
   updateAsset: <K extends keyof Assets>(field: K, value: Assets[K]) => void;
 
   updateScenario: <K extends keyof Scenario>(field: K, value: Scenario[K]) => void;
+  updateScenarioExpenseOverride: (id: number, value: number) => void;
+  resetScenarioExpenseOverrides: () => void;
   resetScenario: () => void;
-  saveScenarioSnapshot: () => void;
+  saveScenarioSnapshot: (expensesMonthlyOverride?: number) => void;
   updateSavedScenarioLabel: (id: number, label: string) => void;
   removeSavedScenario: (id: number) => void;
 
@@ -360,6 +362,11 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
   updateAsset: (field, value) => set((s) => ({ assets: { ...s.assets, [field]: value } })),
 
   updateScenario: (field, value) => set((s) => ({ scenario: { ...s.scenario, [field]: value } })),
+  updateScenarioExpenseOverride: (id, value) =>
+    set((s) => ({
+      scenario: { ...s.scenario, expenseOverrides: { ...s.scenario.expenseOverrides, [id]: value } },
+    })),
+  resetScenarioExpenseOverrides: () => set((s) => ({ scenario: { ...s.scenario, expenseOverrides: {} } })),
   resetScenario: () =>
     set((s) => {
       const mortgageItem = s.expenses.find((x) => /mortgage|rent/i.test(x.category));
@@ -383,17 +390,26 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
           pretax401kPct: avgPct,
           insuranceMonthly: combinedInsurance,
           stateTaxRate: s.stateTaxRate,
+          expenseOverrides: {},
         },
       };
     }),
-  saveScenarioSnapshot: () =>
-    set((s) => ({
-      savedScenarios: [
-        ...s.savedScenarios,
-        { id: s.nextId, label: 'Scenario ' + (s.savedScenarios.length + 1), ...s.scenario },
-      ],
-      nextId: s.nextId + 1,
-    })),
+  // When saving from the itemized "against current expenses" view, fold that total into the
+  // lump-sum fields so the saved snapshot's figures stay correct later even as real expenses change.
+  saveScenarioSnapshot: (expensesMonthlyOverride) =>
+    set((s) => {
+      const snapshot =
+        expensesMonthlyOverride === undefined
+          ? s.scenario
+          : { ...s.scenario, mortgage: 0, otherExpenses: expensesMonthlyOverride, expenseOverrides: {} };
+      return {
+        savedScenarios: [
+          ...s.savedScenarios,
+          { id: s.nextId, label: 'Scenario ' + (s.savedScenarios.length + 1), ...snapshot },
+        ],
+        nextId: s.nextId + 1,
+      };
+    }),
   updateSavedScenarioLabel: (id, label) =>
     set((s) => ({ savedScenarios: s.savedScenarios.map((sc) => (sc.id === id ? { ...sc, label } : sc)) })),
   removeSavedScenario: (id) => set((s) => ({ savedScenarios: s.savedScenarios.filter((sc) => sc.id !== id) })),

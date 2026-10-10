@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import { useFinanceStore } from '../../store/financeStore';
 import { computeScenario } from '../../lib/derive';
@@ -8,6 +8,8 @@ import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { RemoveButton, TextCell } from '../ui/EditableCell';
 import type { Scenario } from '../../lib/types';
+
+type View = 'simple' | 'itemized';
 
 function NumberField({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
   return (
@@ -70,14 +72,28 @@ function SliderField({
 
 export function ScenarioPlanner() {
   const scenario = useFinanceStore((s) => s.scenario);
+  const expenses = useFinanceStore((s) => s.expenses);
   const savedScenarios = useFinanceStore((s) => s.savedScenarios);
   const updateScenario = useFinanceStore((s) => s.updateScenario);
+  const updateScenarioExpenseOverride = useFinanceStore((s) => s.updateScenarioExpenseOverride);
+  const resetScenarioExpenseOverrides = useFinanceStore((s) => s.resetScenarioExpenseOverrides);
   const resetScenario = useFinanceStore((s) => s.resetScenario);
   const saveScenarioSnapshot = useFinanceStore((s) => s.saveScenarioSnapshot);
   const updateSavedScenarioLabel = useFinanceStore((s) => s.updateSavedScenarioLabel);
   const removeSavedScenario = useFinanceStore((s) => s.removeSavedScenario);
 
-  const scenOut = useMemo(() => computeScenario(scenario), [scenario]);
+  const [view, setView] = useState<View>('simple');
+
+  const itemizedTotal = useMemo(
+    () => expenses.reduce((sum, x) => sum + (scenario.expenseOverrides?.[x.id] ?? x.monthly), 0),
+    [expenses, scenario.expenseOverrides]
+  );
+  const itemizedOverridden = Object.keys(scenario.expenseOverrides || {}).length > 0;
+
+  const scenOut = useMemo(
+    () => computeScenario(scenario, view === 'itemized' ? itemizedTotal : undefined),
+    [scenario, view, itemizedTotal]
+  );
   const scenColor = scenOut.cashFlowMonthly >= 0 ? 'oklch(46% 0.1 145)' : 'oklch(50% 0.16 25)';
   const scenVerdict =
     scenOut.cashFlowMonthly >= 0
@@ -95,10 +111,19 @@ export function ScenarioPlanner() {
         </div>
         <div className="flex gap-2">
           <Button onClick={resetScenario}>Reset to current numbers</Button>
-          <Button variant="primary" onClick={saveScenarioSnapshot}>
+          <Button variant="primary" onClick={() => saveScenarioSnapshot(view === 'itemized' ? itemizedTotal : undefined)}>
             Save scenario
           </Button>
         </div>
+      </div>
+
+      <div className="flex gap-2">
+        <Button variant={view === 'simple' ? 'primary' : undefined} onClick={() => setView('simple')}>
+          Simple
+        </Button>
+        <Button variant={view === 'itemized' ? 'primary' : undefined} onClick={() => setView('itemized')}>
+          Against current expenses
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -122,8 +147,12 @@ export function ScenarioPlanner() {
           onChange={(v) => set('salaryB', v)}
           extra={<NumberField label="Annual bonus" value={scenario.bonusB} onChange={(v) => set('bonusB', v)} />}
         />
-        <SliderField label="Mortgage / rent" value={scenario.mortgage} min={0} max={8000} step={50} unitLabel="Per month" onChange={(v) => set('mortgage', v)} />
-        <SliderField label="All other expenses" value={scenario.otherExpenses} min={0} max={10000} step={50} unitLabel="Per month" onChange={(v) => set('otherExpenses', v)} />
+        {view === 'simple' ? (
+          <>
+            <SliderField label="Mortgage / rent" value={scenario.mortgage} min={0} max={8000} step={50} unitLabel="Per month" onChange={(v) => set('mortgage', v)} />
+            <SliderField label="All other expenses" value={scenario.otherExpenses} min={0} max={10000} step={50} unitLabel="Per month" onChange={(v) => set('otherExpenses', v)} />
+          </>
+        ) : null}
         <SliderField
           label="401(k) contribution (% of salary, both partners)"
           value={scenario.pretax401kPct}
@@ -143,6 +172,61 @@ export function ScenarioPlanner() {
           onChange={(v) => set('insuranceMonthly', v)}
         />
       </div>
+
+      {view === 'itemized' && (
+        <Card className="px-4 py-2">
+          <div className="flex justify-between items-center pt-3.5 pb-1.5 px-2.5">
+            <div className="text-[13px] font-semibold">Current expenses, adjusted for this scenario</div>
+            {itemizedOverridden && (
+              <button
+                onClick={resetScenarioExpenseOverrides}
+                className="text-xs text-muted bg-transparent border-none cursor-pointer p-0 underline"
+              >
+                Reset to current amounts
+              </button>
+            )}
+          </div>
+          <table className="w-full border-collapse">
+            <thead>
+              <tr>
+                <th className="text-left text-[11px] uppercase text-muted p-2.5">Category</th>
+                <th className="text-right text-[11px] uppercase text-muted p-2.5">Current / mo</th>
+                <th className="text-right text-[11px] uppercase text-muted p-2.5">Scenario / mo</th>
+              </tr>
+            </thead>
+            <tbody>
+              {expenses.map((x) => {
+                const overridden = scenario.expenseOverrides?.[x.id] !== undefined;
+                return (
+                  <tr key={x.id}>
+                    <td className="p-2 px-2.5 text-sm border-b border-rowborder">{x.category}</td>
+                    <td className="p-2 px-2.5 text-right font-mono text-sm text-muted border-b border-rowborder">{fmt(x.monthly)}</td>
+                    <td className="p-2 px-2.5 text-right border-b border-rowborder">
+                      <input
+                        type="number"
+                        value={scenario.expenseOverrides?.[x.id] ?? x.monthly}
+                        onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                          updateScenarioExpenseOverride(x.id, parseClampedNumber(e.target.value))
+                        }
+                        className={`w-[110px] text-right border rounded-md px-2 py-1 text-sm font-mono ${
+                          overridden ? 'border-accent' : 'border-inputborder'
+                        }`}
+                      />
+                    </td>
+                  </tr>
+                );
+              })}
+              <tr>
+                <td className="p-2 px-2.5 text-sm font-bold">Total</td>
+                <td className="p-2 px-2.5 text-right font-mono text-sm font-bold text-muted">
+                  {fmt(expenses.reduce((sum, x) => sum + x.monthly, 0))}
+                </td>
+                <td className="p-2 px-2.5 text-right font-mono text-sm font-bold">{fmt(itemizedTotal)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </Card>
+      )}
 
       <Card className="px-4 py-2">
         <table className="w-full border-collapse">

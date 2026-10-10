@@ -195,11 +195,13 @@ function computeScenarioCore(sc: Scenario): ScenarioCore {
 }
 
 /** Bonuses are treated as a once-a-year payment, same as computeHousehold: Annual figures
- * include the full year, while Monthly/Biweekly/cash-flow figures come from a bonus-free pass. */
-export function computeScenario(sc: Scenario): ScenarioCalc {
+ * include the full year, while Monthly/Biweekly/cash-flow figures come from a bonus-free pass.
+ * `expensesMonthlyOverride` lets callers substitute an itemized expense total (e.g. the "against
+ * current expenses" view) in place of the scenario's mortgage + other-expenses lump sums. */
+export function computeScenario(sc: Scenario, expensesMonthlyOverride?: number): ScenarioCalc {
   const withBonus = computeScenarioCore(sc);
   const recurring = computeScenarioCore({ ...sc, bonusA: 0, bonusB: 0 });
-  const expensesMonthly = (sc.mortgage || 0) + (sc.otherExpenses || 0);
+  const expensesMonthly = expensesMonthlyOverride ?? (sc.mortgage || 0) + (sc.otherExpenses || 0);
   const expensesAnnual = expensesMonthly * 12;
   const netMonthly = recurring.netAnnual / 12;
   const netBiweekly = recurring.netAnnual / 26;
