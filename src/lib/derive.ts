@@ -158,6 +158,9 @@ export interface ScenarioCalc {
   expensesAnnual: number;
   expensesBiweekly: number;
   cashFlowMonthly: number;
+  /** Annual surplus/shortfall if the bonus never happened — the recurring monthly rate annualized. */
+  cashFlowAnnualBeforeBonus: number;
+  /** Annual surplus/shortfall for a year that includes the bonus. */
   cashFlowAnnual: number;
   cashFlowBiweekly: number;
 }
@@ -219,6 +222,7 @@ export function computeScenario(sc: Scenario, expensesMonthlyOverride?: number):
     expensesAnnual,
     expensesBiweekly: expensesAnnual / 26,
     cashFlowMonthly: netMonthly - expensesMonthly,
+    cashFlowAnnualBeforeBonus: recurring.netAnnual - expensesAnnual,
     cashFlowAnnual: withBonus.netAnnual - expensesAnnual,
     cashFlowBiweekly: netBiweekly - expensesAnnual / 26,
   };

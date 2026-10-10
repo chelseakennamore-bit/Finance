@@ -282,15 +282,24 @@ export function ScenarioPlanner() {
               <td className="p-2 px-2.5 text-right font-mono text-sm text-muted border-b border-rowborder">{fmt(scenOut.expensesBiweekly)}</td>
             </tr>
             <tr>
-              <td className="p-2 px-2.5 text-[15px] font-bold">Net cash flow</td>
+              <td className="p-2 px-2.5 text-[15px] font-bold border-b border-rowborder">Net cash flow (before bonus)</td>
+              <td className="p-2 px-2.5 text-right font-mono text-[15px] font-bold border-b border-rowborder" style={{ color: scenColor }}>
+                {fmtSigned(scenOut.cashFlowAnnualBeforeBonus)}
+              </td>
+              <td className="p-2 px-2.5 text-right font-mono text-[15px] font-bold border-b border-rowborder" style={{ color: scenColor }}>
+                {fmtSigned(scenOut.cashFlowMonthly)}
+              </td>
+              <td className="p-2 px-2.5 text-right font-mono text-[15px] font-bold border-b border-rowborder" style={{ color: scenColor }}>
+                {fmtSigned(scenOut.cashFlowBiweekly)}
+              </td>
+            </tr>
+            <tr>
+              <td className="p-2 px-2.5 text-[15px] font-bold">Net cash flow (after bonus)</td>
               <td className="p-2 px-2.5 text-right font-mono text-[15px] font-bold" style={{ color: scenColor }}>
                 {fmtSigned(scenOut.cashFlowAnnual)}
               </td>
-              <td className="p-2 px-2.5 text-right font-mono text-[15px] font-bold" style={{ color: scenColor }}>
-                {fmtSigned(scenOut.cashFlowMonthly)}
-              </td>
-              <td className="p-2 px-2.5 text-right font-mono text-[15px] font-bold" style={{ color: scenColor }}>
-                {fmtSigned(scenOut.cashFlowBiweekly)}
+              <td className="p-2 px-2.5 text-right text-sm text-subtle" colSpan={2}>
+                same as above — bonus is annual-only
               </td>
             </tr>
           </tbody>
@@ -301,8 +310,8 @@ export function ScenarioPlanner() {
         {scenVerdict}
       </div>
       <p className="text-xs text-subtle m-0">
-        Bonus is treated as a once-a-year payment: Annual figures include it, but Monthly, Biweekly, and cash-flow
-        figures reflect recurring salary only.
+        Bonus is treated as a once-a-year payment: Monthly and Biweekly figures reflect recurring salary only, and
+        "Net cash flow" is split into before/after bonus so you can see its one-time impact on the year.
       </p>
 
       {savedScenarios.length > 0 && (
