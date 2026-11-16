@@ -1,19 +1,20 @@
 import type { FilingStatus } from './types';
 
-/** Social Security wage base for tax year 2026, per SSA's October 2025 announcement. */
-export const SS_WAGE_BASE_ESTIMATE = 184500;
+/** Social Security wage base for tax year 2027, per SSA's October 14, 2026 announcement. */
+export const SS_WAGE_BASE_ESTIMATE = 192300;
 
-/** 2026 federal marginal brackets per IRS Revenue Procedure 2025-32: [rate, cumulative income cap]. */
+/** 2027 federal marginal brackets per IRS Revenue Procedure 2026-35: [rate, cumulative income cap]. */
 export const BRACKETS: Record<FilingStatus, [number, number][]> = {
-  single: [[0.10, 12400], [0.12, 50400], [0.22, 105700], [0.24, 201775], [0.32, 256225], [0.35, 640600], [0.37, Infinity]],
-  mfj: [[0.10, 24800], [0.12, 100800], [0.22, 211400], [0.24, 403550], [0.32, 512450], [0.35, 768700], [0.37, Infinity]],
-  hoh: [[0.10, 17700], [0.12, 67450], [0.22, 105700], [0.24, 201750], [0.32, 256200], [0.35, 640600], [0.37, Infinity]],
+  single: [[0.10, 12800], [0.12, 52025], [0.22, 109125], [0.24, 208325], [0.32, 264550], [0.35, 661375], [0.37, Infinity]],
+  mfj: [[0.10, 25600], [0.12, 104050], [0.22, 218250], [0.24, 416650], [0.32, 529100], [0.35, 793650], [0.37, Infinity]],
+  hoh: [[0.10, 18250], [0.12, 69650], [0.22, 109100], [0.24, 208300], [0.32, 264550], [0.35, 661350], [0.37, Infinity]],
 };
 
-/** 2026 standard deduction per filing status, per IRS Revenue Procedure 2025-32. */
-export const STD_DED: Record<FilingStatus, number> = { single: 16100, mfj: 32200, hoh: 24150 };
+/** 2027 standard deduction per filing status, per IRS Revenue Procedure 2026-35. */
+export const STD_DED: Record<FilingStatus, number> = { single: 16600, mfj: 33200, hoh: 24925 };
 
-/** Additional Medicare (0.9%) applies above these thresholds. */
+/** Additional Medicare (0.9%) applies above these thresholds. Fixed by statute since 2013 —
+ * unlike brackets and the standard deduction, these are not inflation-indexed. */
 export const ADDL_MED_THRESH: Record<FilingStatus, number> = { single: 200000, mfj: 250000, hoh: 200000 };
 
 /** Bracket-walking marginal tax function — shared by real income and scenario projections. */

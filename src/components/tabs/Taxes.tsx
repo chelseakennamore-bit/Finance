@@ -22,7 +22,7 @@ export function Taxes() {
       <div>
         <h1 className="text-[26px] font-bold m-0">Taxes</h1>
         <p className="text-sm text-muted mt-1 mb-0">
-          2026 federal brackets + FICA + {taxState === 'AL' ? 'Alabama' : 'flat state'} rate, based on your filing
+          2027 federal brackets + FICA + {taxState === 'AL' ? 'Alabama' : 'flat state'} rate, based on your filing
           status.
         </p>
       </div>
@@ -126,8 +126,8 @@ export function Taxes() {
         </table>
       </Card>
       <p className="text-xs text-subtle m-0">
-        Uses confirmed 2026 IRS brackets, standard deductions, and Social Security wage base (Revenue Procedure
-        2025-32).{' '}
+        Uses confirmed 2027 IRS brackets and standard deductions (Revenue Procedure 2026-35) and the Social Security
+        wage base per SSA's October 2026 announcement.{' '}
         {taxState === 'AL'
           ? "Alabama tax uses real brackets, standard deduction (with its income-based phase-out), and personal exemption per Alabama Code § 40-18-15 — a 2025 law (HB389) may raise the standard deduction further starting this tax year, pending confirmation of final enacted amounts."
           : 'State tax is a simplified flat rate, not real bracket math.'}{' '}
